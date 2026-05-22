@@ -27,8 +27,26 @@ body {
 @keyframes slideIn { from { transform: translateX(100px); opacity: 0; } }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+@keyframes glow { 0%,100% { box-shadow: 0 0 8px rgba(6,182,212,0.2); } 50% { box-shadow: 0 0 20px rgba(6,182,212,0.5); } }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes borderGlow { 0%,100% { border-color: rgba(6,182,212,0.2); } 50% { border-color: rgba(6,182,212,0.5); } }
 
 select option { background: #0d1b2e; color: #e2e8f0; }
+
+/* India map tooltip */
+.india-tooltip {
+  background: rgba(13,27,46,0.95) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 8px !important;
+  padding: 6px 10px !important;
+  color: #e2e8f0;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important;
+}
+.india-tooltip::before { border-top-color: rgba(13,27,46,0.95) !important; }
 
 /* Responsive touch-friendly adjustments */
 @media (max-width: 639px) {

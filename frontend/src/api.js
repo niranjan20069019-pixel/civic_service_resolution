@@ -113,6 +113,8 @@ export const api = {
 
   getHistory: (id) => request(`/issues/${id}/history`),
 
+  getIssueSLA: (id) => request(`/issues/${id}/sla`),
+
   // Media upload
   uploadImage: async (file) => {
     const token = store.get('accessToken');

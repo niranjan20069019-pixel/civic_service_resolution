@@ -1,10 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "./api.js";
 import { HeroGeometric } from "./components/ui/shape-landing-hero.tsx";
 import { useTranslation } from "./useTranslation.js";
 import { SUPPORTED_LANGUAGES } from "./i18n.js";
+import { motion, AnimatePresence } from "framer-motion";
 import Chatbot from "./Chatbot.jsx";
 import IssueMap from "./IssueMap.jsx";
+import IndiaMap from "./IndiaMap.jsx";
+import ReportTracker from "./ReportTracker.jsx";
 import ImageUpload from "./ImageUpload.jsx";
 import LocationPicker from "./LocationPicker.jsx";
 import { useSocket } from "./useSocket.js";
@@ -175,12 +178,59 @@ const MiniBarChart = ({ data }) => {
   );
 };
 
-// ─── Auth Screen ──────────────────────────────────────────────────────────────
+// ─── Auth Screen (Creative) ────────────────────────────────────────────────────
 const PRESETS = [
   { label:"Citizen",    email:"jane@example.com", password:"Secure123!", role:"citizen" },
   { label:"Official",   email:"bob@city.gov",      password:"Secure123!", role:"official" },
   { label:"Supervisor", email:"alice@city.gov",    password:"Secure123!", role:"supervisor" },
 ];
+
+function Particles() {
+  const particles = useRef([]);
+  if (particles.current.length === 0) {
+    for (let i = 0; i < 25; i++) {
+      particles.current.push({
+        id: i, size: 1.5 + Math.random() * 3,
+        x: Math.random() * 100, y: Math.random() * 100,
+        driftX: (Math.random() - 0.5) * 30, driftY: -20 - Math.random() * 40,
+        duration: 4 + Math.random() * 6, delay: Math.random() * 5,
+        hue: i % 3 === 0 ? 182 : i % 3 === 1 ? 268 : 0,
+      });
+    }
+  }
+  return (
+    <div style={{ position:"fixed", inset:0, overflow:"hidden", pointerEvents:"none", zIndex:0 }}>
+      {particles.current.map(p => (
+        <motion.div
+          key={p.id}
+          style={{
+            position:"absolute", width:p.size, height:p.size, borderRadius:"50%",
+            background: `hsla(${p.hue},70%,60%,0.5)`,
+            left:`${p.x}%`, top:`${p.y}%`,
+            boxShadow: `0 0 ${p.size * 3}px hsla(${p.hue},70%,60%,0.3)`,
+          }}
+          animate={{ y: [0, p.driftY], x: [0, p.driftX], opacity: [0, 0.7, 0] }}
+          transition={{ duration: p.duration, repeat: Infinity, delay: p.delay, ease: "easeInOut" }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function IndiaSilhouette() {
+  return (
+    <svg viewBox="0 0 400 400" style={{ position:"absolute", width:"70%", height:"70%", top:"15%", left:"15%", opacity:0.04, pointerEvents:"none" }}>
+      <path d="M200 20 C240 30 280 40 300 70 C330 100 350 140 360 180 C370 220 365 260 350 290 C335 320 310 340 280 360 C250 380 220 390 200 395 C180 390 150 380 120 360 C90 340 65 320 50 290 C35 260 30 220 40 180 C50 140 70 100 100 70 C120 40 160 30 200 20Z"
+        fill="none" stroke="url(#indiaGrad)" strokeWidth="0.5" opacity="0.6" />
+      <defs>
+        <linearGradient id="indiaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#06b6d4" stopOpacity="1" />
+          <stop offset="100%" stopColor="#a855f7" stopOpacity="0.3" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
 
 const AuthScreen = ({ onLogin, lang, setLang, t }) => {
   const [mode, setMode] = useState("login");
@@ -206,116 +256,221 @@ const AuthScreen = ({ onLogin, lang, setLang, t }) => {
   };
 
   return (
-    <div style={{ minHeight:"100vh", background:T.bg, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Inter',system-ui,sans-serif" }}>
-      {/* Background glow */}
+    <div style={{ minHeight:"100vh", background:T.bg, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Inter',system-ui,sans-serif", position:"relative", overflow:"hidden" }}>
+      {/* Background layers */}
       <div style={{ position:"fixed", inset:0, background:"radial-gradient(ellipse 80% 50% at 50% -20%, rgba(6,182,212,0.08), transparent)", pointerEvents:"none" }} />
+      <div style={{ position:"fixed", inset:0, background:"radial-gradient(ellipse 50% 40% at 80% 60%, rgba(168,85,247,0.05), transparent)", pointerEvents:"none" }} />
+      <IndiaSilhouette />
+      <Particles />
 
-      <div style={{ width:"min(440px,calc(100% - 32px))", background:"rgba(13,27,46,0.85)", backdropFilter:"blur(24px)", border:`1px solid ${T.border}`, borderRadius:20, padding:"clamp(24px,5vw,40px) clamp(20px,5vw,40px) 36px", position:"relative", zIndex:1 }}>
+      <motion.div
+        initial={{ opacity: 0, y: 30, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] }}
+        style={{ width:"min(440px,calc(100% - 32px))", background:"rgba(13,27,46,0.85)", backdropFilter:"blur(24px)", border:`1px solid ${T.border}`, borderRadius:20, padding:"clamp(24px,5vw,40px) clamp(20px,5vw,40px) 36px", position:"relative", zIndex:1, overflow:"hidden" }}
+      >
+        {/* Animated gradient border */}
+        <motion.div
+          style={{ position:"absolute", inset:-1, borderRadius:21, background:"linear-gradient(135deg, transparent 40%, rgba(6,182,212,0.2), rgba(168,85,247,0.2), transparent 60%)", zIndex:-1, opacity:0.6 }}
+          animate={{ backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+        />
 
         {/* Logo + title */}
-        <div style={{ textAlign:"center", marginBottom:28 }}>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          style={{ textAlign:"center", marginBottom:28 }}
+        >
           <div style={{ width:52, height:52, background:T.gradBtn, borderRadius:14, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px", fontSize:26, boxShadow:"0 0 24px rgba(6,182,212,0.3)" }}>🏛️</div>
           <h1 style={{ color:T.text, fontSize:22, fontWeight:700, margin:"0 0 4px" }}>{t("app_name")}</h1>
           <p style={{ color:T.muted, fontSize:13 }}>{mode === "login" ? t("sign_in_account") : t("create_account")}</p>
-        </div>
+        </motion.div>
 
-        {/* Language selector */}
-        <div style={{ marginBottom: 20 }}>
-          <label style={{ fontSize: 12, color: T.muted, display: "block", marginBottom: 6 }}>
-            🌐 {t("select_language")}
-          </label>
+        {/* Language selector - prominent */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
+          style={{ marginBottom: 20 }}
+        >
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
+            <span style={{ fontSize:16 }}>🌐</span>
+            <span style={{ fontSize:13, fontWeight:600, color:T.muted, letterSpacing:"0.03em" }}>{t("select_language")}</span>
+            <span style={{ marginLeft:"auto", fontSize:11, color:T.dim, background:"rgba(255,255,255,0.04)", padding:"2px 8px", borderRadius:4 }}>{SUPPORTED_LANGUAGES[lang]}</span>
+          </div>
           <select value={lang} onChange={e => setLang(e.target.value)}
-            style={{ ...inputBase, cursor: "pointer" }}
+            style={{ ...inputBase, cursor: "pointer", background:"rgba(255,255,255,0.06)", border:`1px solid rgba(6,182,212,0.3)` }}
             onFocus={e => (e.target.style.borderColor = T.cyan)}
-            onBlur={e => (e.target.style.borderColor = T.border)}>
+            onBlur={e => (e.target.style.borderColor = "rgba(6,182,212,0.3)")}>
             {Object.entries(SUPPORTED_LANGUAGES).map(([code, name]) => (
               <option key={code} value={code}>{name}</option>
             ))}
           </select>
-        </div>
+        </motion.div>
 
         {/* Quick-fill presets */}
         <div style={{ display:"flex", gap:6, marginBottom:24 }}>
           {PRESETS.map(p => {
             const active = form.email === p.email;
             return (
-              <button key={p.role} onClick={() => setForm(f => ({ ...f, email:p.email, password:p.password, role:p.role }))}
+              <motion.button key={p.role} onClick={() => setForm(f => ({ ...f, email:p.email, password:p.password, role:p.role }))}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 style={{ flex:1, padding:"7px 0", borderRadius:8, border:`1px solid ${active ? T.cyan : T.border}`, background:active ? "rgba(6,182,212,0.12)" : "transparent", color:active ? T.cyan : T.muted, fontSize:12, cursor:"pointer", fontWeight:500, transition:"all 0.15s" }}>
                 {p.label}
-              </button>
+              </motion.button>
             );
           })}
         </div>
 
-        <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
-          {mode === "register" && (
-            <Inp label={t("username")} icon="👤" value={form.name} onChange={e => set("name", e.target.value)} placeholder="johndoe" />
-          )}
-          <Inp label={t("email")} icon="✉️" type="email" value={form.email} onChange={e => set("email", e.target.value)} placeholder="you@example.com" />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={mode}
+            initial={{ opacity: 0, x: mode === "login" ? -15 : 15 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: mode === "login" ? 15 : -15 }}
+            transition={{ duration: 0.25 }}
+            style={{ display:"flex", flexDirection:"column", gap:16 }}
+          >
+            {mode === "register" && (
+              <Inp label={t("username")} icon="👤" value={form.name} onChange={e => set("name", e.target.value)} placeholder="johndoe" />
+            )}
+            <Inp label={t("email")} icon="✉️" type="email" value={form.email} onChange={e => set("email", e.target.value)} placeholder="you@example.com" />
 
-          {/* Password with show/hide */}
-          <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-            <label style={{ fontSize:13, fontWeight:500, color:T.muted }}>{t("password")}</label>
-            <div style={{ position:"relative" }}>
-              <span style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:T.muted, fontSize:15 }}>🔒</span>
-              <input type={showPw ? "text" : "password"} value={form.password} onChange={e => set("password", e.target.value)} placeholder="Min 6 characters"
-                style={{ ...inputBase, paddingLeft:38, paddingRight:44 }}
-                onFocus={e => (e.target.style.borderColor = T.cyan)}
-                onBlur={e => (e.target.style.borderColor = T.border)} />
-              <button onClick={() => setShowPw(s => !s)} style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:T.muted, fontSize:16, padding:0 }}>
-                {showPw ? "🙈" : "👁️"}
-              </button>
+            {/* Password with show/hide */}
+            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+              <label style={{ fontSize:13, fontWeight:500, color:T.muted }}>{t("password")}</label>
+              <div style={{ position:"relative" }}>
+                <span style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:T.muted, fontSize:15 }}>🔒</span>
+                <input type={showPw ? "text" : "password"} value={form.password} onChange={e => set("password", e.target.value)} placeholder="Min 6 characters"
+                  style={{ ...inputBase, paddingLeft:38, paddingRight:44 }}
+                  onFocus={e => (e.target.style.borderColor = T.cyan)}
+                  onBlur={e => (e.target.style.borderColor = T.border)} />
+                <button onClick={() => setShowPw(s => !s)} style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:T.muted, fontSize:16, padding:0 }}>
+                  {showPw ? "🙈" : "👁️"}
+                </button>
+              </div>
             </div>
-          </div>
 
-          {mode === "register" && (
-            <Sel label={t("role")} value={form.role} onChange={e => set("role", e.target.value)}>
-              <option value="citizen">{t("citizen")}</option>
-              <option value="official">{t("official")}</option>
-              <option value="supervisor">{t("supervisor")}</option>
-            </Sel>
-          )}
+            {mode === "register" && (
+              <Sel label={t("role")} value={form.role} onChange={e => set("role", e.target.value)}>
+                <option value="citizen">{t("citizen")}</option>
+                <option value="official">{t("official")}</option>
+                <option value="supervisor">{t("supervisor")}</option>
+              </Sel>
+            )}
 
-          {/* Password strength bar (register only) */}
-          {mode === "register" && (
-            <div style={{ height:4, borderRadius:2, background:T.border, overflow:"hidden" }}>
-              <div style={{ height:"100%", width:`${Math.min((form.password.length/12)*100, 100)}%`, background:form.password.length < 6 ? "#ef4444" : form.password.length < 10 ? "#f59e0b" : T.cyan, borderRadius:2, transition:"width 0.3s, background 0.3s" }} />
-            </div>
-          )}
+            {/* Password strength bar (register only) */}
+            {mode === "register" && (
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: "100%" }}
+                style={{ height:4, borderRadius:2, background:T.border, overflow:"hidden" }}
+              >
+                <motion.div
+                  style={{ height:"100%", background:form.password.length < 6 ? "#ef4444" : form.password.length < 10 ? "#f59e0b" : T.cyan, borderRadius:2 }}
+                  animate={{ width: `${Math.min((form.password.length/12)*100, 100)}%` }}
+                  transition={{ duration: 0.3 }}
+                />
+              </motion.div>
+            )}
 
-          {error && (
-            <div style={{ color:"#fca5a5", fontSize:13, background:"rgba(239,68,68,0.08)", padding:"10px 14px", borderRadius:10, border:"1px solid rgba(239,68,68,0.2)" }}>⚠ {error}</div>
-          )}
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{ color:"#fca5a5", fontSize:13, background:"rgba(239,68,68,0.08)", padding:"10px 14px", borderRadius:10, border:"1px solid rgba(239,68,68,0.2)" }}
+              >⚠ {error}</motion.div>
+            )}
 
-          {/* Gradient CTA button */}
-          <button onClick={handleSubmit} disabled={loading}
-            style={{ marginTop:4, padding:"13px", borderRadius:12, background:T.gradBtn, color:"#fff", fontWeight:700, fontSize:15, border:"none", cursor:loading?"not-allowed":"pointer", opacity:loading?0.8:1, boxShadow:"0 0 24px rgba(6,182,212,0.3)", transition:"all 0.2s", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}
-            onMouseEnter={e => !loading && (e.currentTarget.style.boxShadow="0 0 36px rgba(6,182,212,0.5)")}
-            onMouseLeave={e => (e.currentTarget.style.boxShadow="0 0 24px rgba(6,182,212,0.3)")}>
-            {loading ? "Please wait…" : mode === "login" ? t("sign_in") : t("register")}
-          </button>
-        </div>
+            {/* Gradient CTA button */}
+            <motion.button
+              whileHover={!loading ? { scale: 1.01, boxShadow: "0 0 40px rgba(6,182,212,0.5)" } : {}}
+              whileTap={!loading ? { scale: 0.99 } : {}}
+              onClick={handleSubmit} disabled={loading}
+              style={{ marginTop:4, padding:"13px", borderRadius:12, background:T.gradBtn, color:"#fff", fontWeight:700, fontSize:15, border:"none", cursor:loading?"not-allowed":"pointer", opacity:loading?0.8:1, boxShadow:"0 0 24px rgba(6,182,212,0.3)", transition:"all 0.2s", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}
+            >
+              {loading ? (
+                <span style={{ display:"flex", alignItems:"center", gap:8 }}>
+                  <span style={{ width:16, height:16, border:"2px solid rgba(255,255,255,0.3)", borderTop:"2px solid #fff", borderRadius:"50%", animation:"spin 0.6s linear infinite" }} />
+                  Please wait…
+                </span>
+              ) : mode === "login" ? t("sign_in") : t("register")}
+            </motion.button>
+          </motion.div>
+        </AnimatePresence>
 
-        <p style={{ textAlign:"center", marginTop:20, color:T.dim, fontSize:13 }}>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          style={{ textAlign:"center", marginTop:20, color:T.dim, fontSize:13 }}
+        >
           {mode === "login" ? "No account? " : "Already have an account? "}
-          <button onClick={() => setMode(m => m==="login"?"register":"login")} style={{ color:T.cyan, background:"none", border:"none", cursor:"pointer", fontWeight:600 }}>
+          <motion.button
+            whileHover={{ color: T.cyan }}
+            onClick={() => { setMode(m => m==="login"?"register":"login"); setError(""); }}
+            style={{ color:T.cyan, background:"none", border:"none", cursor:"pointer", fontWeight:600, fontSize:13 }}
+          >
             {mode === "login" ? t("register") : t("login")}
-          </button>
-        </p>
+          </motion.button>
+        </motion.p>
 
         <p style={{ textAlign:"center", marginTop:12, color:T.dim, fontSize:12 }}>
-          <button onClick={() => document.getElementById("dashboard")?.scrollIntoView({ behavior:"smooth" })} style={{ color:T.dim, background:"none", border:"none", cursor:"pointer" }}>
+          <button onClick={() => document.getElementById("dashboard")?.scrollIntoView({ behavior:"smooth" })} style={{ color:T.dim, background:"none", border:"none", cursor:"pointer", fontSize:12 }}>
             ← Back to Home
           </button>
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 };
 
 // ─── Issue List ───────────────────────────────────────────────────────────────
+function LanguageSelector({ lang, setLang, t, size="small" }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    function handleClick(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+  const currentName = SUPPORTED_LANGUAGES[lang] || "English";
+  const flagMap = { en:"🇬🇧", hi:"🇮🇳", ta:"🇮🇳", te:"🇮🇳", bn:"🇮🇳", mr:"🇮🇳", gu:"🇮🇳", kn:"🇮🇳", ml:"🇮🇳", pa:"🇮🇳" };
+  return (
+    <div ref={ref} style={{ position:"relative", display:"inline-block" }}>
+      <button onClick={() => setOpen(o => !o)}
+        style={{ display:"flex", alignItems:"center", gap:6, padding: size==="small" ? "7px 12px" : "9px 16px", borderRadius:10, background:"rgba(255,255,255,0.06)", border:`1px solid ${open?"rgba(6,182,212,0.4)":T.border}`, color:T.text, fontSize: size==="small" ? 12 : 14, cursor:"pointer", transition:"all 0.15s", fontWeight:500 }}
+        onMouseEnter={e => e.currentTarget.style.borderColor="rgba(6,182,212,0.3)"}
+        onMouseLeave={e => e.currentTarget.style.borderColor=open?"rgba(6,182,212,0.4)":T.border}
+      >
+        <span style={{ fontSize:16 }}>{flagMap[lang] || "🌐"}</span>
+        <span>{currentName}</span>
+        <span style={{ fontSize:9, marginLeft:2, opacity:0.6 }}>{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div style={{ position:"absolute", top:"calc(100% + 6px)", right:0, background:"rgba(13,27,46,0.98)", backdropFilter:"blur(16px)", border:`1px solid ${T.border}`, borderRadius:12, padding:"6px", zIndex:9999, minWidth:180, boxShadow:"0 8px 32px rgba(0,0,0,0.5)", maxHeight:280, overflowY:"auto" }}>
+          {Object.entries(SUPPORTED_LANGUAGES).map(([code, name]) => (
+            <button key={code} onClick={() => { setLang(code); setOpen(false); }}
+              style={{ display:"flex", alignItems:"center", gap:10, width:"100%", padding:"8px 12px", borderRadius:8, background:code===lang?"rgba(6,182,212,0.12)":"transparent", border:"none", color:code===lang?T.cyan:T.text, cursor:"pointer", fontSize:13, fontWeight:code===lang?600:400, transition:"all 0.1s", textAlign:"left" }}
+              onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.06)"}
+              onMouseLeave={e => e.currentTarget.style.background=code===lang?"rgba(6,182,212,0.12)":"transparent"}
+            >
+              <span style={{ fontSize:16, width:24, textAlign:"center" }}>{flagMap[code] || "🌐"}</span>
+              <span>{name}</span>
+              {code===lang && <span style={{ marginLeft:"auto", fontSize:14, color:T.cyan }}>✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const IssueList = ({ user, onSelect, onCreate }) => {
-  const { t } = useTranslation();
+  const { t, lang, setLang } = useTranslation();
   const { isMobile } = useResponsive();
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -323,6 +478,7 @@ const IssueList = ({ user, onSelect, onCreate }) => {
   const [filters, setFilters] = useState({ status:"", category:"", priority:"", search:"", page:1 });
   const [pagination, setPagination] = useState({ total:0, pages:1 });
   const [showMap, setShowMap] = useState(false);
+  const [showIndiaMap, setShowIndiaMap] = useState(false);
   const [liveFlash, setLiveFlash] = useState(false);
 
   const load = useCallback(async () => {
@@ -359,30 +515,39 @@ const IssueList = ({ user, onSelect, onCreate }) => {
   return (
     <div>
       {/* Header */}
-      <div style={{ textAlign:"center", marginBottom: isMobile ? 20 : 28 }}>
-        <h2 style={{ fontSize: isMobile ? 22 : 26, fontWeight:700, color:T.text, margin:"0 0 4px" }}>
-          {t("welcome_user")}, <span style={{ background:T.grad, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>{user.name}</span> 👋
-        </h2>
-        <p style={{ color:T.muted, fontSize:13, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
-          <span style={{ width:8, height:8, borderRadius:"50%", background:"#10b981", display:"inline-block", boxShadow:"0 0 6px #10b981" }} />
-          {t("live_updated")}
-        </p>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom: isMobile ? 20 : 28, flexWrap:"wrap", gap:12 }}>
+        <div style={{ textAlign: isMobile ? "center" : "left", flex:1 }}>
+          <h2 style={{ fontSize: isMobile ? 22 : 26, fontWeight:700, color:T.text, margin:"0 0 4px" }}>
+            {t("welcome_user")}, <span style={{ background:T.grad, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>{user.name}</span> 👋
+          </h2>
+          <p style={{ color:T.muted, fontSize:13, display:"flex", alignItems:"center", gap:8, justifyContent: isMobile ? "center" : "flex-start" }}>
+            <span style={{ width:8, height:8, borderRadius:"50%", background:"#10b981", display:"inline-block", boxShadow:"0 0 6px #10b981" }} />
+            {t("live_updated")}
+          </p>
+        </div>
+        <LanguageSelector lang={lang} setLang={setLang} t={t} />
       </div>
 
       {/* Action buttons */}
       <div style={{ display:"flex", flexWrap:"wrap", justifyContent:"center", gap:8, marginBottom: isMobile ? 20 : 28 }}>
         <Btn variant="secondary" onClick={load}>↻ {t("refresh")}</Btn>
-        <Btn variant={showMap?"primary":"ghost"} onClick={() => setShowMap(m => !m)}>🗺 {showMap ? "Hide Map" : "Show Map"}</Btn>
+        <Btn variant={showMap?"primary":"ghost"} onClick={() => setShowMap(m => !m)}>🗺 {showMap ? "Hide Issues" : "Issue Map"}</Btn>
+        <Btn variant={showIndiaMap?"primary":"ghost"} onClick={() => setShowIndiaMap(m => !m)}>🇮🇳 {showIndiaMap ? "Hide Heatmap" : "India Heatmap"}</Btn>
         {user.role === "citizen" && (
           <Btn onClick={onCreate} style={{ background:T.gradBtn, border:"none", boxShadow:"0 0 20px rgba(6,182,212,0.3)" }}>⊕ {t("new_issue")}</Btn>
         )}
         {liveFlash && <span style={{ padding:"8px 14px", borderRadius:10, background:"rgba(16,185,129,0.15)", border:"1px solid rgba(16,185,129,0.3)", color:"#6ee7b7", fontSize:12, fontWeight:600, animation:"slideIn 0.25s ease" }}>⚡ Live update</span>}
       </div>
 
-      {/* Map */}
+      {/* Maps */}
       {showMap && (
         <div style={{ marginBottom:24 }}>
           <IssueMap issues={issues} onSelect={onSelect} />
+        </div>
+      )}
+      {showIndiaMap && (
+        <div style={{ marginBottom:24 }}>
+          <IndiaMap issues={issues} lang={lang} />
         </div>
       )}
 
@@ -949,6 +1114,7 @@ export default function App() {
 
   const NAV_MAIN = [
     { id:"issues", label: user.role==="citizen" ? t("my_reports") : t("dashboard"), icon:"⊞" },
+    ...(user.role === "citizen" ? [{ id:"tracker", label: "Report Status", icon:"📋" }] : []),
   ];
   const NAV_TOOLS = user.role !== "citizen" ? [
     { id:"analytics", label: t("analytics"), icon:"📊" },
@@ -1086,10 +1252,14 @@ export default function App() {
               onCancel={() => setView("issues")} />
           )}
           {view==="analytics" && <Analytics user={user} />}
+          {view==="tracker" && (
+            <ReportTracker user={user}
+              onSelect={id => { setSelectedIssueId(id); setView("detail"); }} />
+          )}
         </div>
       </div>
 
-      <Chatbot role={user.role} />
+      <Chatbot role={user.role} onNavigate={(target) => { setView(target); setSelectedIssueId(null); }} userName={user.name} />
     </div>
   );
 }
