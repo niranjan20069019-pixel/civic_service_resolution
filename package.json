@@ -7,6 +7,7 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
+    "prestart": "node -e \"const fs = require('fs'); const { execSync } = require('child_process'); if (!fs.existsSync('frontend/dist/index.html')) execSync('npm --prefix frontend run build', { stdio: 'inherit' });\"",
     "dev": "nodemon src/server.js",
     "build": "npm --prefix frontend run build",
     "test": "jest --runInBand --forceExit",
