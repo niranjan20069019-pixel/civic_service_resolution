@@ -14,6 +14,7 @@
     "dev:backend": "nodemon src/server.js",
     "dev:frontend": "npm --prefix frontend run dev",
     "build": "npm --prefix frontend run build",
+    "deploy:cloudflare": "npm --prefix frontend run pages:deploy",
     "test": "jest --runInBand --forceExit",
     "lint": "eslint src/ --ext .js"
   },

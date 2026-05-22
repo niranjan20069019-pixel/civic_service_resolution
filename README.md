@@ -127,6 +127,44 @@ npm run dev        # opens http://localhost:5173
 
 The Vite dev server proxies all `/api/*` requests to `http://localhost:3000`, so no CORS issues during development.
 
+For Cloudflare Pages deployment, the frontend must know where the backend lives. Create `frontend/.env` from `frontend/.env.example` and set:
+
+```bash
+VITE_API_BASE=https://<your-backend-host>/api
+```
+
+Then redeploy the frontend.
+
+#### Deploying frontend to Cloudflare Pages
+
+This project includes Cloudflare Pages support for the frontend. The backend remains a separate Express API and must be hosted independently.
+
+```bash
+cd frontend
+npm install
+npm run build
+npm run pages:deploy
+```
+
+Or from the repository root:
+
+```bash
+npm run deploy:cloudflare
+```
+
+If you prefer local preview on Pages:
+
+```bash
+cd frontend
+npm run pages:dev
+```
+
+Make sure you set `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` in a local `.env` file before deploying.
+
+The `CORS_ORIGINS` setting in `.env` should include your Cloudflare Pages URL once deployed.
+
+The Vite dev server proxies all `/api/*` requests to `http://localhost:3000`, so no CORS issues during development.
+
 **Quick-login presets** on the login screen let you sign in as Citizen, Official, or Supervisor instantly (uses the sample accounts from the curl examples above — register them first if the store is empty).
 
 ```bash

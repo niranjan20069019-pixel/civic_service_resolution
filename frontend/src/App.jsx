@@ -6,7 +6,7 @@ import { SUPPORTED_LANGUAGES } from "./i18n.js";
 import { motion, AnimatePresence } from "framer-motion";
 import Chatbot from "./Chatbot.jsx";
 import IssueMap from "./IssueMap.jsx";
-import IndiaMap from "./IndiaMap.jsx";
+import HeatmapDashboard from "./HeatmapDashboard.jsx";
 import ReportTracker from "./ReportTracker.jsx";
 import ImageUpload from "./ImageUpload.jsx";
 import LocationPicker from "./LocationPicker.jsx";
@@ -250,7 +250,7 @@ const AuthScreen = ({ onLogin, lang, setLang, t }) => {
       if (res?.success) onLogin(res.data.user);
       else setError(res?.message || "Authentication failed.");
     } catch {
-      setError("Cannot reach server. Is the backend running on port 3000?");
+      setError("Cannot reach the backend. If you deployed the frontend to Cloudflare Pages, set VITE_API_BASE to your API URL and redeploy.");
     }
     setLoading(false);
   };
@@ -478,7 +478,6 @@ const IssueList = ({ user, onSelect, onCreate }) => {
   const [filters, setFilters] = useState({ status:"", category:"", priority:"", search:"", page:1 });
   const [pagination, setPagination] = useState({ total:0, pages:1 });
   const [showMap, setShowMap] = useState(false);
-  const [showIndiaMap, setShowIndiaMap] = useState(false);
   const [liveFlash, setLiveFlash] = useState(false);
 
   const load = useCallback(async () => {
@@ -532,22 +531,16 @@ const IssueList = ({ user, onSelect, onCreate }) => {
       <div style={{ display:"flex", flexWrap:"wrap", justifyContent:"center", gap:8, marginBottom: isMobile ? 20 : 28 }}>
         <Btn variant="secondary" onClick={load}>↻ {t("refresh")}</Btn>
         <Btn variant={showMap?"primary":"ghost"} onClick={() => setShowMap(m => !m)}>🗺 {showMap ? "Hide Issues" : "Issue Map"}</Btn>
-        <Btn variant={showIndiaMap?"primary":"ghost"} onClick={() => setShowIndiaMap(m => !m)}>🇮🇳 {showIndiaMap ? "Hide Heatmap" : "India Heatmap"}</Btn>
         {user.role === "citizen" && (
           <Btn onClick={onCreate} style={{ background:T.gradBtn, border:"none", boxShadow:"0 0 20px rgba(6,182,212,0.3)" }}>⊕ {t("new_issue")}</Btn>
         )}
         {liveFlash && <span style={{ padding:"8px 14px", borderRadius:10, background:"rgba(16,185,129,0.15)", border:"1px solid rgba(16,185,129,0.3)", color:"#6ee7b7", fontSize:12, fontWeight:600, animation:"slideIn 0.25s ease" }}>⚡ Live update</span>}
       </div>
 
-      {/* Maps */}
+      {/* Map */}
       {showMap && (
         <div style={{ marginBottom:24 }}>
           <IssueMap issues={issues} onSelect={onSelect} />
-        </div>
-      )}
-      {showIndiaMap && (
-        <div style={{ marginBottom:24 }}>
-          <IndiaMap issues={issues} lang={lang} />
         </div>
       )}
 
@@ -1115,6 +1108,7 @@ export default function App() {
   const NAV_MAIN = [
     { id:"issues", label: user.role==="citizen" ? t("my_reports") : t("dashboard"), icon:"⊞" },
     ...(user.role === "citizen" ? [{ id:"tracker", label: "Report Status", icon:"📋" }] : []),
+    { id:"heatmap", label: "India Map", icon:"🇮🇳" },
   ];
   const NAV_TOOLS = user.role !== "citizen" ? [
     { id:"analytics", label: t("analytics"), icon:"📊" },
@@ -1256,10 +1250,14 @@ export default function App() {
             <ReportTracker user={user}
               onSelect={id => { setSelectedIssueId(id); setView("detail"); }} />
           )}
+          {view==="heatmap" && <HeatmapDashboard />}
         </div>
       </div>
 
-      <Chatbot role={user.role} onNavigate={(target) => { setView(target); setSelectedIssueId(null); }} userName={user.name} />
+      <Chatbot role={user.role}
+        onNavigate={(target) => { setView(target); setSelectedIssueId(null); }}
+        onChangeLang={(code) => { setLang(code); }}
+        userName={user.name} />
     </div>
   );
 }

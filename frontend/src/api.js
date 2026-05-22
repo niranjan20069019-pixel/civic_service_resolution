@@ -17,7 +17,7 @@ async function request(path, options = {}) {
 
   // Try token refresh on 401
   if (res.status === 401 && store.get('refreshToken')) {
-    const refreshed = await fetch('/api/auth/refresh', {
+    const refreshed = await fetch(`${API_BASE}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken: store.get('refreshToken') }),
@@ -27,7 +27,7 @@ async function request(path, options = {}) {
       store.set('accessToken', data.accessToken);
       store.set('refreshToken', data.refreshToken);
       headers['Authorization'] = `Bearer ${data.accessToken}`;
-      res = await fetch(`/api${path}`, { ...options, headers });
+      res = await fetch(`${API_BASE}${path}`, { ...options, headers });
     } else {
       // Refresh failed — clear tokens
       store.del('accessToken');
@@ -120,7 +120,7 @@ export const api = {
     const token = store.get('accessToken');
     const form = new FormData();
     form.append('image', file);
-    const res = await fetch('/api/upload', {
+    const res = await fetch(`${API_BASE}/upload`, {
       method: 'POST',
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: form,

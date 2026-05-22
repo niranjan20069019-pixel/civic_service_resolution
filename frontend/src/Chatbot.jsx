@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useResponsive } from "./useResponsive.js";
+import { SUPPORTED_LANGUAGES } from "./i18n.js";
 
 const T_BOT = {
   surface: "rgba(13,27,46,0.95)",
@@ -17,6 +18,24 @@ function timeGreeting() {
   if (h < 17) return "Good Afternoon";
   return "Good Evening";
 }
+
+// ─── Language map for "change language to X" ──────────────────────────────────
+const LANG_BY_NAME = {};
+for (const [code, name] of Object.entries(SUPPORTED_LANGUAGES)) {
+  LANG_BY_NAME[name.toLowerCase()] = code;
+  LANG_BY_NAME[code] = code;
+}
+// Additional aliases
+LANG_BY_NAME["hindi"] = "hi";
+LANG_BY_NAME["tamil"] = "ta";
+LANG_BY_NAME["telugu"] = "te";
+LANG_BY_NAME["bengali"] = "bn";
+LANG_BY_NAME["marathi"] = "mr";
+LANG_BY_NAME["gujarati"] = "gu";
+LANG_BY_NAME["kannada"] = "kn";
+LANG_BY_NAME["malayalam"] = "ml";
+LANG_BY_NAME["punjabi"] = "pa";
+LANG_BY_NAME["english"] = "en";
 
 const CITIZEN_FLOWS = [
   {
@@ -57,14 +76,14 @@ const CITIZEN_FLOWS = [
   },
   {
     q: "Take me to my Dashboard",
-    a: "Sure! Opening your report dashboard where you can see all your reports and their status.",
-    keywords: ["dashboard", "home", "main", "my reports", "all issues"],
+    a: "Opening your report dashboard…",
+    keywords: ["dashboard", "home", "main", "my reports", "all issues", "show issues", "go back"],
     intent: "issues",
   },
   {
     q: "Take me to Report Status",
-    a: "Opening the Report Status page where you can track every issue's progress and SLA deadlines.",
-    keywords: ["report status", "tracker", "track", "pipeline", "my progress"],
+    a: "Opening Report Status with your pipeline view…",
+    keywords: ["report status", "tracker", "track", "pipeline", "my progress", "where is my"],
     intent: "tracker",
   },
 ];
@@ -72,49 +91,49 @@ const CITIZEN_FLOWS = [
 const OFFICIAL_FLOWS = [
   {
     q: "How do I update an issue status?",
-    a: "Open the issue → click 'Update Status' → choose the new status and add a note.\n\nStatus flow:\n🔵 Open → 🟡 In Progress → ✅ Resolved\n\nAlways add a note explaining the action — it's logged in the audit trail with your name and timestamp.",
+    a: "Open the issue → click 'Update Status' → choose the new status and add a note.\n\nStatus flow:\n🔵 Open → 🟡 In Progress → ✅ Resolved\n\nAlways add a note — it's logged in the audit trail with your name and timestamp.",
     keywords: ["update status", "change status", "modify"],
     intent: null,
   },
   {
     q: "What are my SLA deadlines?",
-    a: "Deadlines = Base SLA × Priority multiplier:\n• 🔴 Critical → 25% of base (fastest)\n• 🟠 High → 50%\n• 🟡 Medium → 100% (standard)\n• ⚪ Low → 150%\n\nExample: Water issue base SLA = 12h\n→ Critical = 3h, High = 6h, Medium = 12h, Low = 18h\n\nThe deadline badge turns red when overdue.",
+    a: "Deadlines = Base SLA × Priority multiplier:\n• 🔴 Critical → 25% of base\n• 🟠 High → 50%\n• 🟡 Medium → 100%\n• ⚪ Low → 150%\n\nExample: Water issue base SLA = 12h → Critical = 3h, High = 6h, Medium = 12h, Low = 18h",
     keywords: ["sla", "deadline", "due", "time", "hour"],
     intent: null,
   },
   {
     q: "How does auto-escalation work?",
-    a: "When 80% of the SLA deadline passes with no status update, the system auto-escalates to a supervisor.\n\nYou'll see 'Auto-escalated' in the audit trail.\n\n✅ Best practice: Update status to 'In Progress' as soon as you start working — this shows activity and prevents escalation.",
+    a: "At 80% SLA elapsed with no status update, the system auto-escalates to a supervisor.\n\n✅ Best practice: Update to 'In Progress' early — this prevents escalation.",
     keywords: ["escalate", "auto", "cron", "breach"],
     intent: null,
   },
   {
     q: "How do I close vs reject an issue?",
-    a: "✅ Resolved — problem is fixed on the ground. Use this when work is complete.\n\n⬜ Closed — administratively closed (e.g. duplicate, out of jurisdiction). Always add a reason note.\n\n🔴 Rejected — not a valid civic issue. Must include a clear reason so the citizen understands why.",
+    a: "✅ Resolved — problem is fixed on ground\n⬜ Closed — admin close (duplicate, out of jurisdiction)\n🔴 Rejected — not valid. Must include a clear reason.",
     keywords: ["close", "reject", "resolve", "difference"],
     intent: null,
   },
   {
     q: "How to handle high-priority issues?",
-    a: "For Critical/High priority issues:\n1. Assign immediately — don't leave in 'Open' state\n2. Update to 'In Progress' within the first 25% of SLA\n3. Add progress notes regularly\n4. If blocked, escalate manually to supervisor with a note\n5. Resolve and document the fix clearly",
+    a: "For Critical/High:\n1. Assign immediately\n2. Update to 'In Progress' within 25% of SLA\n3. Add regular progress notes\n4. If blocked, escalate to supervisor\n5. Resolve and document the fix",
     keywords: ["high priority", "critical", "urgent", "important"],
     intent: null,
   },
   {
     q: "How do I use the analytics page?",
-    a: "Analytics (sidebar → 📊) shows:\n• Resolution rates by category\n• Issues by status breakdown\n• Average resolution times\n• Overdue issue counts\n\nUse it to:\n→ Spot categories with high backlogs\n→ Identify recurring issue types\n→ Track your team's performance over time",
+    a: "Analytics (📊) shows resolution rates, status breakdown, avg resolution times, and overdue counts.\n\nUse it to spot categories with high backlogs and track team performance over time.",
     keywords: ["analytics", "chart", "stats", "statistics", "report"],
     intent: "analytics",
   },
   {
     q: "Take me to the Dashboard",
-    a: "Opening the Dashboard where you can see and manage all civic issues.",
-    keywords: ["dashboard", "home", "main", "issues", "all issues"],
+    a: "Opening the Dashboard…",
+    keywords: ["dashboard", "home", "main", "issues", "all issues", "go back"],
     intent: "issues",
   },
   {
     q: "Take me to Analytics",
-    a: "Opening the Analytics page with performance metrics, charts, and SLA data.",
+    a: "Opening Analytics…",
     keywords: ["analytics", "charts", "metrics", "stats"],
     intent: "analytics",
   },
@@ -123,55 +142,42 @@ const OFFICIAL_FLOWS = [
 const SUPERVISOR_FLOWS = [
   {
     q: "How do I monitor team performance?",
-    a: "Go to Analytics (📊) to see:\n• Resolution rates per official\n• Average time-to-resolve by category\n• Escalated issues count\n• Overdue issues by priority\n\nFilter by date range to compare weekly/monthly performance.",
+    a: "Go to Analytics (📊) to see resolution rates per official, avg time-to-resolve, escalated issues, and overdue priorities.",
     keywords: ["monitor", "team", "performance", "analytics"],
     intent: "analytics",
   },
   {
     q: "How do I handle escalated issues?",
-    a: "Escalated issues appear with an 'Auto-escalated' tag in the audit trail.\n\nSteps:\n1. Review the issue history and notes\n2. Reassign to a different official if needed\n3. Update status to 'In Progress' to reset escalation\n4. Add a supervisor note explaining the action\n5. Monitor until resolved",
+    a: "Escalated issues show 'Auto-escalated' in the audit trail.\n\n1. Review the history\n2. Reassign to a different official if needed\n3. Update to 'In Progress' to reset escalation\n4. Add a supervisor note\n5. Monitor until resolved",
     keywords: ["escalate", "escalation", "reassign", "sla"],
     intent: null,
   },
   {
     q: "How to set reporting priorities?",
-    a: "Priority guidelines for your team:\n\n🔴 Critical — immediate safety risk (gas leak, flooding, downed power line)\n🟠 High — major disruption (main road blocked, water outage)\n🟡 Medium — standard civic issue (pothole, broken streetlight)\n⚪ Low — cosmetic/minor (park bench, faded markings)\n\nEnsure officials follow these consistently for accurate SLA tracking.",
+    a: "🔴 Critical — immediate safety risk\n🟠 High — major disruption\n🟡 Medium — standard issue\n⚪ Low — cosmetic/minor\n\nEnsure consistent application for accurate SLA tracking.",
     keywords: ["priority", "guidelines", "set priority"],
     intent: null,
   },
   {
-    q: "How to generate a status report?",
-    a: "From Analytics page:\n1. Set the date range filter\n2. Note the resolution rate % and avg resolution time\n3. Check 'Issues by Category' chart for hotspots\n4. Export or screenshot for your report\n\nKey metrics to include:\n• Total issues received vs resolved\n• % resolved within SLA\n• Top 3 issue categories\n• Escalation count",
-    keywords: ["report", "generate", "status report", "export"],
-    intent: "analytics",
-  },
-  {
     q: "How do I reassign an issue?",
-    a: "Open the issue → Update Status → add a note like:\n'Reassigned to [Official Name] — [reason]'\n\nThen notify the official directly. The audit trail will record the reassignment with your name and timestamp.\n\nTip: Use 'In Progress' status when reassigning to prevent auto-escalation.",
+    a: "Open the issue → Update Status → add a note like:\n'Reassigned to [Official] — reason'\n\nThe audit trail records it with your name and timestamp.\n\nTip: Use 'In Progress' status to prevent auto-escalation during reassignment.",
     keywords: ["reassign", "assign", "transfer", "move"],
     intent: null,
   },
   {
-    q: "What are best practices for officials?",
-    a: "Share these with your team:\n\n✅ Update status within 1h of receiving a new issue\n✅ Always add notes when changing status\n✅ Use 'In Progress' before 80% SLA to prevent escalation\n✅ Resolve with a clear description of the fix\n✅ Reject only with a detailed reason\n✅ Check analytics weekly to spot backlogs early",
-    keywords: ["best practice", "guidelines", "tips", "advice"],
-    intent: null,
-  },
-  {
     q: "Take me to the Dashboard",
-    a: "Opening the Dashboard with all civic issues.",
-    keywords: ["dashboard", "home", "main", "issues"],
+    a: "Opening the Dashboard…",
+    keywords: ["dashboard", "home", "main", "issues", "go back"],
     intent: "issues",
   },
   {
     q: "Take me to Analytics",
-    a: "Opening the Analytics page with performance metrics and charts.",
+    a: "Opening Analytics…",
     keywords: ["analytics", "metrics", "stats", "charts"],
     intent: "analytics",
   },
 ];
 
-// ─── Casual conversation patterns ────────────────────────────────────────────
 const CASUAL = [
   {
     patterns: ["hi", "hello", "hey", "heyy", "howdy", "yo", "sup"],
@@ -183,25 +189,49 @@ const CASUAL = [
   },
   {
     patterns: ["thank", "thanks", "ty", "thx", "appreciate"],
-    response: () => "You're welcome! 😊 Happy to help. Let me know if you need anything else.",
+    response: () => "You're welcome! 😊 Glad I could help. Anything else you need?",
   },
   {
     patterns: ["bye", "goodbye", "see you", "cya", "gtg", "take care"],
-    response: () => "Goodbye! 👋 Feel free to come back anytime you need assistance. Have a great day!",
+    response: () => "Goodbye! 👋 Come back anytime you need help. Have a great day!",
   },
   {
     patterns: ["who are you", "what are you", "tell me about yourself", "your name"],
-    response: () => "I'm the CivicTrack Assistant 🏛️ — your AI guide for the civic issue reporting platform.\n\nI can help you:\n• Report and track civic issues\n• Navigate to any page\n• Understand SLA deadlines\n• Answer questions about the process\n\nWhat would you like to do?",
+    response: () => "I'm the CivicTrack Assistant 🏛️ — your AI guide.\n\nI can:\n• Help you report & track civic issues\n• Navigate you to any page\n• Explain SLA deadlines\n• Change the app language\n• Answer questions about the process\n\nWhat would you like to do?",
   },
   {
-    patterns: ["what can you do", "help", "help me", "capabilities", "features", "options"],
-    response: () => "Here's what I can help you with:\n\n📋 Navigate to any page\n📝 Answer questions about reporting\n⏱ Explain SLA deadlines and tracking\n🔍 Find the status of your reports\n📊 Help with analytics\n💡 Give tips and best practices\n\nJust ask me anything!",
+    patterns: ["what can you do", "help", "help me", "capabilities", "features", "options", "what do you do"],
+    response: () => "Here's what I can do:\n\n📋 Navigate to any page (Dashboard, Analytics, etc.)\n📝 Answer questions about reporting\n⏱ Explain SLA deadlines\n🌐 Change the app language\n🔍 Track your report status\n💡 Give tips and best practices\n\nTry saying 'Go to Dashboard' or 'Change language to Tamil'!",
   },
   {
     patterns: ["how are you", "how's it going", "you doing"],
-    response: () => "I'm doing great, thanks for asking! 🤖 Ready and waiting to help you with civic issues. What's on your mind?",
+    response: () => "I'm doing great, thanks! 🤖 Ready and waiting. What can I help you with?",
   },
 ];
+
+// ─── Language change detection ────────────────────────────────────────────────
+function matchLanguageChange(text) {
+  const lower = text.toLowerCase().trim();
+  const patterns = [
+    /(?:change|switch|set|go to)\s*(?:language|lang)\s*(?:to\s*)?(.+)/i,
+    /(.+?)\s*(?:language|lang|bhasa|bhasha|மொழி|భాష|ভাষा|भाषा|ભાષા|ಭಾಷೆ|ഭാഷ|ਭਾਸ਼ਾ)/i,
+    /^(hi|hindi|tamil|ta|telugu|te|bengali|bn|marathi|mr|gujarati|gu|kannada|kn|malayalam|ml|punjabi|pa|english|en)\s*(?:mein|me|ல|లో|এ|मध्ये|મા|ದಲ್ಲಿ|ൽ|ਵਿੱਚ)?$/i,
+    /(?:speak|talk|want)\s*(.+)/i,
+  ];
+
+  for (const pat of patterns) {
+    const m = lower.match(pat);
+    if (m) {
+      const target = (m[1] || m[0]).trim().toLowerCase();
+      for (const [alias, code] of Object.entries(LANG_BY_NAME)) {
+        if (target.includes(alias) || target === alias) {
+          return code;
+        }
+      }
+    }
+  }
+  return null;
+}
 
 function getFlows(role) {
   if (role === "supervisor") return SUPERVISOR_FLOWS;
@@ -212,9 +242,9 @@ function getFlows(role) {
 function getGreeting(role, name) {
   const greet = timeGreeting();
   const base = {
-    supervisor: `👋 ${greet}, Supervisor${name ? ` ${name}` : ""}! I can help you monitor team performance, handle escalations, and generate reports. What do you need?`,
-    citizen: `👋 ${greet}${name ? ` ${name}` : ""}! I'm your CivicTrack assistant. I can help you report issues, track their status, navigate to any page, and understand how the process works. What do you need?`,
-    official: `👋 ${greet}${name ? ` ${name}` : ""}! I'm your reporting assistant. I can help you manage issues, meet SLA deadlines, navigate pages, and follow best practices. What do you need?`,
+    supervisor: `${greet}, Supervisor${name ? ` ${name}` : ""}! 📋 I can help monitor performance, handle escalations, and more. What do you need?`,
+    citizen: `${greet}${name ? ` ${name}` : ""}! 🙋 I'm your CivicTrack assistant. Report issues, track status, navigate pages, or try 'Change language to Tamil'.`,
+    official: `${greet}${name ? ` ${name}` : ""}! 💬 I can help manage issues, meet SLA deadlines, navigate pages. What do you need?`,
   };
   return base[role] || base.citizen;
 }
@@ -222,10 +252,10 @@ function getGreeting(role, name) {
 function matchFlow(text, flows) {
   const lower = text.toLowerCase().trim();
 
-  // Check for navigation intents explicitly
+  // Direct intent match (fast path)
   for (const f of flows) {
     if (f.intent && f.keywords.some(k => lower.includes(k))) {
-      return { ...f, nav: true };
+      return f;
     }
   }
 
@@ -239,9 +269,7 @@ function matchFlow(text, flows) {
       best = f;
     }
   }
-  if (bestScore > 0) return best;
-
-  return null;
+  return bestScore > 0 ? best : null;
 }
 
 function matchCasual(text) {
@@ -252,10 +280,11 @@ function matchCasual(text) {
   return null;
 }
 
-export default function Chatbot({ role, onNavigate, userName }) {
+export default function Chatbot({ role, onNavigate, onChangeLang, userName }) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [navPending, setNavPending] = useState(false);
   const flows = getFlows(role);
   const bottomRef = useRef(null);
   const { isMobile } = useResponsive();
@@ -271,14 +300,23 @@ export default function Chatbot({ role, onNavigate, userName }) {
 
   const addMsg = (from, text) => setMessages(m => [...m, { from, text }]);
 
+  const doNavigate = (intent) => {
+    if (navPending || !onNavigate) return;
+    setNavPending(true);
+    onNavigate(intent);
+    setTimeout(() => setNavPending(false), 500);
+  };
+
+  const respondAndNav = (msg, intent) => {
+    addMsg("bot", msg);
+    if (intent && onNavigate) {
+      setTimeout(() => doNavigate(intent), 200);
+    }
+  };
+
   const handleQuick = (flow) => {
     addMsg("user", flow.q);
-    setTimeout(() => {
-      addMsg("bot", flow.a);
-      if (flow.intent && onNavigate) {
-        setTimeout(() => onNavigate(flow.intent), 800);
-      }
-    }, 300);
+    respondAndNav(flow.a, flow.intent);
   };
 
   const handleSend = () => {
@@ -287,34 +325,39 @@ export default function Chatbot({ role, onNavigate, userName }) {
     setInput("");
     addMsg("user", q);
 
-    setTimeout(() => {
-      // 1. Try casual match first
-      const casual = matchCasual(q);
-      if (casual) {
-        addMsg("bot", casual.response(userName));
-        return;
-      }
+    // Immediate response - no artificial delay
+    // 1. Check language change
+    const langCode = matchLanguageChange(q);
+    if (langCode && onChangeLang) {
+      const name = SUPPORTED_LANGUAGES[langCode] || langCode;
+      onChangeLang(langCode);
+      addMsg("bot", `🌐 Language changed to ${name}! ${SUPPORTED_LANGUAGES[langCode] ? "✅" : ""}`);
+      return;
+    }
 
-      // 2. Try flow match
-      const flow = matchFlow(q, flows);
-      if (flow) {
-        addMsg("bot", flow.a + (flow.intent && onNavigate ? "\n\n🔄 Taking you there now…" : ""));
-        if (flow.intent && onNavigate) {
-          setTimeout(() => onNavigate(flow.intent), 1200);
-        }
-        return;
-      }
+    // 2. Casual match
+    const casual = matchCasual(q);
+    if (casual) {
+      addMsg("bot", casual.response(userName));
+      return;
+    }
 
-      // 3. Fallback — more helpful than before
-      addMsg("bot", "I'm not sure I understood that. Try:\n\n• Asking a question like 'How do I report?'\n• Saying 'Take me to Dashboard'\n• Saying 'Help' to see what I can do\n• Clicking one of the quick links below");
-    }, 350);
+    // 3. Flow match (with navigation)
+    const flow = matchFlow(q, flows);
+    if (flow) {
+      respondAndNav(flow.a, flow.intent);
+      return;
+    }
+
+    // 4. Fallback
+    addMsg("bot", "I didn't quite catch that. Try one of these:\n\n• 'Go to Dashboard'\n• 'Change language to Hindi'\n• 'How do I report?'\n• 'Track my report'\n• 'Help' — to see all options");
   };
 
   return (
     <>
       <button
         onClick={() => setOpen(o => !o)}
-        title={role === "supervisor" ? "Supervisor Assistant" : role === "citizen" ? "Citizen Assistant" : "Official Assistant"}
+        title="CivicTrack Assistant"
         style={{
           position:"fixed", bottom:isMobile?16:28, right:isMobile?16:28, zIndex:1000,
           width:isMobile?48:52, height:isMobile?48:52, borderRadius:"50%",
@@ -353,7 +396,7 @@ export default function Chatbot({ role, onNavigate, userName }) {
               <div style={{ color:T_BOT.text, fontWeight:700, fontSize:14 }}>CivicTrack Assistant</div>
               <div style={{ color:T_BOT.cyan, fontSize:11, display:"flex", alignItems:"center", gap:4 }}>
                 <span style={{ width:6, height:6, borderRadius:"50%", background:"#10b981", display:"inline-block" }} />
-                {role === "supervisor" ? "Supervisor Mode" : role === "citizen" ? "Citizen Mode" : "Official Mode"} · {timeGreeting()}
+                {timeGreeting()} · {role.charAt(0).toUpperCase() + role.slice(1)} Mode
               </div>
             </div>
           </div>
@@ -369,6 +412,7 @@ export default function Chatbot({ role, onNavigate, userName }) {
                   color:T_BOT.text, fontSize:13, lineHeight:1.55,
                   border:m.from==="bot"?`1px solid ${T_BOT.border}`:"none",
                   whiteSpace:"pre-line",
+                  animation:"fadeUp 0.15s ease",
                 }}>
                   {m.text}
                 </div>
@@ -414,7 +458,7 @@ export default function Chatbot({ role, onNavigate, userName }) {
             <input
               value={input} onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key==="Enter" && handleSend()}
-              placeholder={"Ask me anything… try 'Help'"}
+              placeholder={"Ask or type 'Help'…"}
               style={{
                 flex:1, padding:"9px 12px", borderRadius:10, fontSize:13,
                 background:"rgba(255,255,255,0.05)", border:`1px solid ${T_BOT.border}`,
@@ -429,6 +473,15 @@ export default function Chatbot({ role, onNavigate, userName }) {
                 border:"none", color:"#fff", cursor:"pointer", fontSize:14, fontWeight:600,
               }}>↑</button>
           </div>
+
+          {/* Language hint */}
+          {messages.length <= 2 && (
+            <div style={{ padding:"0 12px 8px", marginTop:-4 }}>
+              <span style={{ fontSize:10, color:T_BOT.dim, fontStyle:"italic" }}>
+                🌐 Try: "Change language to Tamil"
+              </span>
+            </div>
+          )}
         </div>
       )}
     </>
