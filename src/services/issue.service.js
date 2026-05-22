@@ -1,4 +1,8 @@
 const { IssueStore, HistoryStore, UserStore } = require('../models/store');
+const SLAService = require('./sla.service');
+const { getIO } = require('../io');
+
+const emit = (event, data) => { try { const io = getIO(); if (io) io.emit(event, data); } catch (_) {} };
 
 const IssueService = {
   /**
@@ -18,6 +22,7 @@ const IssueService = {
       note: 'Issue created',
     });
 
+    emit('issue:created', issue);
     return issue;
   },
 
@@ -59,7 +64,8 @@ const IssueService = {
     }
 
     const timeline = HistoryStore.findByIssueId(issueId);
-    return { ...issue, timeline };
+    const sla = SLAService.getIssueSLA(issueId);
+    return { ...issue, timeline, sla };
   },
 
   /**
@@ -93,6 +99,7 @@ const IssueService = {
       note: note || null,
     });
 
+    emit('issue:updated', updated);
     return updated;
   },
 

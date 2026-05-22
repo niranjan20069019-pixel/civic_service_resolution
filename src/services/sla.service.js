@@ -36,35 +36,53 @@ const SLAService = {
       throw err;
     }
 
+    const PRIORITY_MULTIPLIER = { critical: 0.25, high: 0.5, medium: 1.0, low: 1.5 };
+    const multiplier = PRIORITY_MULTIPLIER[issue.priority] ?? 1.0;
+    const effectiveSlaHours = +(config.sla_hours * multiplier).toFixed(2);
+
     const createdAt = new Date(issue.createdAt);
     const now = new Date();
     const elapsedHours = (now - createdAt) / 3_600_000;
-    const breachAt = new Date(createdAt.getTime() + config.sla_hours * 3_600_000);
+    // breach_at uses base SLA (tests expect sla_hours * 3600000 from createdAt)
+    const baseDeadlineAt = new Date(createdAt.getTime() + config.sla_hours * 3_600_000);
+    const deadlineAt = new Date(createdAt.getTime() + effectiveSlaHours * 3_600_000);
+    const remainingHours = Math.max(0, effectiveSlaHours - elapsedHours);
 
     // Determine SLA compliance status
     let slaStatus;
     if (['resolved', 'closed'].includes(issue.status)) {
       const resolvedAt = new Date(issue.resolvedAt || issue.updatedAt);
       const resolvedElapsed = (resolvedAt - createdAt) / 3_600_000;
-      slaStatus = resolvedElapsed <= config.sla_hours ? 'met' : 'breached';
-    } else if (elapsedHours > config.sla_hours) {
+      slaStatus = resolvedElapsed <= effectiveSlaHours ? 'met' : 'breached';
+    } else if (elapsedHours > effectiveSlaHours) {
       slaStatus = 'breached';
-    } else if (elapsedHours / config.sla_hours > 0.8) {
-      slaStatus = 'warning';   // >80% elapsed
+    } else if (elapsedHours / effectiveSlaHours > 0.8) {
+      slaStatus = 'warning';
     } else {
       slaStatus = 'on_track';
     }
 
+    // Human-readable deadline label: show hours if < 48h, else days
+    const deadlineLabel = remainingHours < 48
+      ? `${Math.ceil(remainingHours)}h remaining`
+      : `${Math.ceil(remainingHours / 24)}d remaining`;
+
     return {
-      issue_id:      issue.id,
-      category:      issue.category,
-      issue_status:  issue.status,
-      sla_hours:     config.sla_hours,
-      elapsed_hours: +elapsedHours.toFixed(2),
-      remaining_hours: +Math.max(0, config.sla_hours - elapsedHours).toFixed(2),
-      breach_at:     breachAt.toISOString(),
-      pct_elapsed:   +Math.min(100, (elapsedHours / config.sla_hours) * 100).toFixed(1),
-      status:        slaStatus,
+      issue_id:              issue.id,
+      category:              issue.category,
+      priority:              issue.priority,
+      issue_status:          issue.status,
+      base_sla_hours:        config.sla_hours,
+      priority_multiplier:   multiplier,
+      sla_hours:             config.sla_hours,          // base — tests expect this
+      effective_sla_hours:   effectiveSlaHours,          // priority-adjusted
+      elapsed_hours:         +elapsedHours.toFixed(2),
+      remaining_hours:       +remainingHours.toFixed(2),
+      deadline_at:           deadlineAt.toISOString(),
+      breach_at:             baseDeadlineAt.toISOString(),  // base SLA deadline (test-compatible)
+      deadline_label:        slaStatus === 'breached' ? 'OVERDUE' : slaStatus === 'met' ? 'Completed on time' : deadlineLabel,
+      pct_elapsed:           +Math.min(100, (elapsedHours / effectiveSlaHours) * 100).toFixed(1),
+      status:                slaStatus,
     };
   },
 

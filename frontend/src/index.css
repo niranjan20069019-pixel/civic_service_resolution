@@ -1,3 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #0a0f1e;
+  color: #e2e8f0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+::-webkit-scrollbar-thumb { background: rgba(6,182,212,0.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(6,182,212,0.5); }
+
+/* Animations */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes slideIn { from { transform: translateX(100px); opacity: 0; } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+
+select option { background: #0d1b2e; color: #e2e8f0; }
+
+/* Responsive touch-friendly adjustments */
+@media (max-width: 639px) {
+  html { font-size: 15px; }
+  body { -webkit-text-size-adjust: 100%; }
+  input, select, textarea, button { font-size: 16px !important; }
+  /* Prevent iOS zoom on input focus */
+  input, select, textarea { font-size: 16px; }
+  /* Better scrollbar for touch */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+}
+
+/* Improve map containers on mobile */
+@media (max-width: 639px) {
+  .leaflet-container { touch-action: manipulation; }
+}
+
+/* Sidebar nav links - bigger touch targets on mobile */
+@media (max-width: 639px) {
+  button, .btn-like { min-height: 44px; }
+}
+
+/* Prevent layout shift from scrollbar */
+html { overflow-y: scroll; }
+
+/* Smooth transitions for responsive changes */
+.responsive-transition { transition: all 0.25s ease; }

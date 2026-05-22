@@ -17,6 +17,38 @@ const router = Router();
 // All issue routes require authentication
 router.use(authenticate);
 
+// ─── Seed demo data (supervisor only) ────────────────────────────────────────
+router.post('/seed', authorize('supervisor'), async (req, res) => {
+  const { IssueStore, HistoryStore, UserStore } = require('../models/store');
+  const SEED = [
+    { title: 'Large pothole on MG Road', description: 'Deep pothole near bus stop causing vehicle damage', category: 'roads', priority: 'high', status: 'open', location: { address: 'MG Road, Bengaluru', lat: 12.9716, lng: 77.5946 } },
+    { title: 'Broken streetlight near park', description: 'Streetlight has been out for 2 weeks creating safety hazard', category: 'electricity', priority: 'medium', status: 'in_progress', location: { address: 'Cubbon Park, Bengaluru', lat: 12.9763, lng: 77.5929 } },
+    { title: 'Overflowing garbage bin', description: 'Garbage bin on main street overflowing for 3 days', category: 'sanitation', priority: 'high', status: 'open', location: { address: 'Brigade Road, Bengaluru', lat: 12.9719, lng: 77.6074 } },
+    { title: 'Water pipe burst on 5th Cross', description: 'Water gushing out since morning, road flooded', category: 'water', priority: 'critical', status: 'resolved', location: { address: '5th Cross, Indiranagar', lat: 12.9784, lng: 77.6408 } },
+    { title: 'Park benches vandalized', description: 'Multiple benches broken in the children\'s play area', category: 'parks', priority: 'low', status: 'closed', location: { address: 'Lalbagh, Bengaluru', lat: 12.9507, lng: 77.5848 } },
+    { title: 'Stray dogs menacing residents', description: 'Pack of stray dogs attacking pedestrians near school', category: 'safety', priority: 'critical', status: 'in_progress', location: { address: 'Koramangala, Bengaluru', lat: 12.9352, lng: 77.6245 } },
+    { title: 'Road cave-in near metro station', description: 'Sinkhole forming near metro construction site', category: 'roads', priority: 'critical', status: 'open', location: { address: 'Majestic Metro, Bengaluru', lat: 12.9767, lng: 77.5713 } },
+    { title: 'Sewage overflow on residential street', description: 'Sewage backing up into street after heavy rain', category: 'sanitation', priority: 'high', status: 'in_progress', location: { address: 'Jayanagar, Bengaluru', lat: 12.9308, lng: 77.5838 } },
+    { title: 'No water supply for 48 hours', description: 'Entire block without water supply since Tuesday', category: 'water', priority: 'high', status: 'resolved', location: { address: 'Whitefield, Bengaluru', lat: 12.9698, lng: 77.7499 } },
+    { title: 'Illegal dumping near lake', description: 'Construction debris being dumped near Ulsoor Lake', category: 'other', priority: 'medium', status: 'open', location: { address: 'Ulsoor Lake, Bengaluru', lat: 12.9833, lng: 77.6101 } },
+  ];
+
+  // Find or use the requesting user as reporter
+  const reporter = req.user;
+  let seeded = 0;
+  for (const s of SEED) {
+    const { status, ...rest } = s;
+    const issue = IssueStore.create({ ...rest, reportedBy: reporter.id });
+    HistoryStore.append(issue.id, { action: 'created', field: null, oldValue: null, newValue: 'open', performedBy: reporter.id, performedByName: reporter.name, performedByRole: reporter.role, note: 'Seeded demo issue' });
+    if (status !== 'open') {
+      IssueStore.update(issue.id, { status });
+      HistoryStore.append(issue.id, { action: 'status_changed', field: 'status', oldValue: 'open', newValue: status, performedBy: reporter.id, performedByName: reporter.name, performedByRole: reporter.role, note: 'Demo seed' });
+    }
+    seeded++;
+  }
+  res.json({ success: true, message: `Seeded ${seeded} demo issues`, data: { seeded } });
+});
+
 /**
  * @swagger
  * /issues:

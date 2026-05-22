@@ -6,12 +6,14 @@ const store = {
 };
 
 // ─── Base fetch with auth + auto-refresh ─────────────────────────────────────
+const API_BASE = import.meta.env.VITE_API_BASE || '/api';
+
 async function request(path, options = {}) {
   const headers = { 'Content-Type': 'application/json', ...options.headers };
   const token = store.get('accessToken');
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  let res = await fetch(`/api${path}`, { ...options, headers });
+  let res = await fetch(`${API_BASE}${path}`, { ...options, headers });
 
   // Try token refresh on 401
   if (res.status === 401 && store.get('refreshToken')) {
@@ -110,6 +112,22 @@ export const api = {
     }),
 
   getHistory: (id) => request(`/issues/${id}/history`),
+
+  // Media upload
+  uploadImage: async (file) => {
+    const token = store.get('accessToken');
+    const form = new FormData();
+    form.append('image', file);
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+    });
+    return res.json();
+  },
+
+  // Seed demo data (supervisor only)
+  seedData: () => request('/issues/seed', { method: 'POST' }),
 
   // Analytics (public)
   getAnalytics: async () => {

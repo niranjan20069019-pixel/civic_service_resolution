@@ -2,18 +2,30 @@
   "name": "civic-issue-api",
   "version": "2.0.0",
   "private": true,
-  "workspaces": ["frontend"],
+  "workspaces": [
+    "frontend"
+  ],
   "description": "Production-ready REST API for a Civic Issue Reporting Platform with SLA engine and analytics",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
     "prestart": "node -e \"const fs = require('fs'); const { execSync } = require('child_process'); if (!fs.existsSync('frontend/dist/index.html')) execSync('npm --prefix frontend run build', { stdio: 'inherit' });\"",
-    "dev": "nodemon src/server.js",
+    "dev": "concurrently --kill-others-on-fail \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "nodemon src/server.js",
+    "dev:frontend": "npm --prefix frontend run dev",
     "build": "npm --prefix frontend run build",
     "test": "jest --runInBand --forceExit",
     "lint": "eslint src/ --ext .js"
   },
-  "keywords": ["civic", "issues", "rest-api", "express", "jwt", "sla", "analytics"],
+  "keywords": [
+    "civic",
+    "issues",
+    "rest-api",
+    "express",
+    "jwt",
+    "sla",
+    "analytics"
+  ],
   "author": "Civic Platform Team",
   "license": "MIT",
   "dependencies": {
@@ -27,19 +39,25 @@
     "joi": "^17.13.1",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
     "node-cron": "^3.0.3",
+    "socket.io": "^4.8.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^10.0.0",
     "winston": "^3.13.0"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
     "jest": "^29.7.0",
     "nodemon": "^3.1.4",
     "supertest": "^7.0.0"
   },
   "jest": {
     "testEnvironment": "node",
-    "testMatch": ["**/tests/**/*.test.js"]
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ]
   }
 }

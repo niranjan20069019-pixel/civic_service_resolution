@@ -17,6 +17,8 @@ const authRoutes = require('./routes/auth.routes');
 const issueRoutes = require('./routes/issue.routes');
 const adminRoutes = require('./routes/admin.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
+const translateRoutes = require('./routes/translate.routes');
+const uploadRoutes = require('./routes/upload.routes');
 
 const createApp = () => {
   const app = express();
@@ -88,6 +90,11 @@ const createApp = () => {
   app.use('/api/issues', issueRoutes);
   app.use('/api/admin', adminRoutes);
   app.use('/api/analytics', analyticsRoutes);
+  app.use('/api/translate', translateRoutes);
+  app.use('/api/upload', uploadRoutes);
+
+  // Serve uploaded images
+  app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
   // ─── Frontend static assets ───────────────────────────────────────────────
   app.use(express.static(clientBuildPath));
