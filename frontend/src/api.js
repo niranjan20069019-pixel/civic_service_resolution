@@ -142,18 +142,23 @@ export const api = {
 
   // Analytics (public)
   getAnalytics: async () => {
-    const [summary, byCategory, byStatus] = await Promise.all([
-      request('/analytics/summary'),
-      request('/analytics/by-category'),
-      request('/analytics/by-status'),
-    ]);
-    if (!summary.success) return summary;
+    let summary, byCategory, byStatus;
+    try {
+      [summary, byCategory, byStatus] = await Promise.all([
+        request('/analytics/summary'),
+        request('/analytics/by-category'),
+        request('/analytics/by-status'),
+      ]);
+    } catch (err) {
+      return { success: false, message: "Analytics server unreachable" };
+    }
+    if (!summary?.success) return summary || { success: false, message: "Analytics unavailable" };
     return {
       success: true,
       data: {
-        ...summary.data,
-        by_category: byCategory.data || [],
-        by_status: byStatus.data || [],
+        ...(summary.data || {}),
+        by_category: Array.isArray(byCategory?.data) ? byCategory.data : [],
+        by_status: Array.isArray(byStatus?.data) ? byStatus.data : [],
       },
     };
   },

@@ -18,9 +18,13 @@ export default function Analytics({ user }) {
 
   const load = useCallback(() => {
     setLoading(true);
+    setError("");
     api.getAnalytics().then(res => {
-      if (res?.success) setData(res.data);
+      if (res?.success && res.data) setData(res.data);
       else setError(res?.message || "Failed to load analytics.");
+      setLoading(false);
+    }).catch(err => {
+      setError(err?.message || "Network error — could not reach server.");
       setLoading(false);
     });
   }, []);
