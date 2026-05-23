@@ -11,16 +11,11 @@ if (!process.env.JWT_ACCESS_SECRET || !process.env.JWT_REFRESH_SECRET) {
 }
 
 const app = createApp();
-// Reuse the same origin set that CORS middleware uses
-const { allowedOrigins } = require('./app');
 
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: (origin, cb) => {
-      if (!origin || allowedOrigins.has(origin)) return cb(null, true);
-      cb(new Error(`Socket.IO CORS: ${origin} not allowed`));
-    },
+    origin: true,
     methods: ['GET', 'POST'],
     credentials: true,
   },
