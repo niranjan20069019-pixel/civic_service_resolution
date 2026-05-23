@@ -24,16 +24,22 @@ const notificationRoutes = require('./routes/notification.routes');
 const createApp = () => {
   const app = express();
 
-  // ─── Security headers ─────────────────────────────────────────────────────
-  app.use(helmet());
+  // ─── Security headers (relaxed for inline styles used by the app) ──────────
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
+    })
+  );
 
   // ─── CORS ─────────────────────────────────────────────────────────────────
+  const allowedOrigins = config.cors.origins;
   app.use(
     cors({
       origin: (origin, cb) => {
-        // Allow requests with no origin (curl, Postman, mobile apps)
         if (!origin) return cb(null, true);
-        if (config.cors.origins.includes(origin)) return cb(null, true);
+        if (allowedOrigins.includes('*')) return cb(null, true);
+        if (allowedOrigins.includes(origin)) return cb(null, true);
         cb(new Error(`CORS: Origin ${origin} not allowed`));
       },
       methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],

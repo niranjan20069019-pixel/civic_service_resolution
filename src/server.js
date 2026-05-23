@@ -6,11 +6,25 @@ const logger = require('./utils/logger');
 const { startAll, stopAll } = require('./jobs/cron');
 const { setIO } = require('./io');
 
+// ─── Startup checks ───────────────────────────────────────────────────────────
+if (config.env === 'production') {
+  const missing = [];
+  if (!config.jwt.accessSecret) missing.push('JWT_ACCESS_SECRET');
+  if (!config.jwt.refreshSecret) missing.push('JWT_REFRESH_SECRET');
+  if (missing.length > 0) {
+    logger.error(`Missing required env vars: ${missing.join(', ')}`);
+    process.exit(1);
+  }
+}
+
 const app = createApp();
 const server = http.createServer(app);
 
+const allowedOrigins = config.cors.origins.includes('*')
+  ? true
+  : config.cors.origins;
 const io = new Server(server, {
-  cors: { origin: config.cors.origins, methods: ['GET', 'POST'] },
+  cors: { origin: allowedOrigins, methods: ['GET', 'POST'], credentials: true },
 });
 setIO(io);
 

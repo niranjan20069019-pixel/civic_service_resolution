@@ -7,3 +7,7 @@ dist/
 uploads/*
 !uploads/.gitkeep
 .wrangler/
+*.db
+*.db-shm
+*.db-wal
+*.db-journal

@@ -10,8 +10,8 @@ const config = {
   },
 
   jwt: {
-    accessSecret: process.env.JWT_ACCESS_SECRET || 'dev_access_secret_change_in_production_32chars',
-    refreshSecret: process.env.JWT_REFRESH_SECRET || 'dev_refresh_secret_change_in_production_32chars',
+    accessSecret: process.env.JWT_ACCESS_SECRET,
+    refreshSecret: process.env.JWT_REFRESH_SECRET,
     accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   },
@@ -23,7 +23,7 @@ const config = {
   },
 
   cors: {
-    origins: (process.env.CORS_ORIGINS || 'http://localhost:3000').split(','),
+    origins: (process.env.CORS_ORIGINS || 'http://localhost:3000').split(',').map(s => s.trim()).filter(Boolean),
   },
 
   log: {
