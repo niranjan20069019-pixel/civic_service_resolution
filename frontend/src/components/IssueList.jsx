@@ -18,6 +18,8 @@ const inputBase = {
   width:"100%", boxSizing:"border-box", transition:"border-color 0.2s",
 };
 
+const selBase = { padding:"6px 10px", borderRadius:8, border:`1px solid ${T.border}`, fontSize:12, outline:"none", color:T.text, background:"rgba(255,255,255,0.05)", cursor:"pointer", minWidth:140 };
+
 export default function IssueList({ user, onSelect, onCreate }) {
   const { t, lang, setLang } = useTranslation();
   const { isMobile } = useResponsive();
@@ -28,6 +30,24 @@ export default function IssueList({ user, onSelect, onCreate }) {
   const [pagination, setPagination] = useState({ total:0, pages:1 });
   const [showMap, setShowMap] = useState(false);
   const [liveFlash, setLiveFlash] = useState(false);
+  const [updatingId, setUpdatingId] = useState(null);
+  const [statusValues, setStatusValues] = useState({});
+  const [updateError, setUpdateError] = useState("");
+
+  const handleQuickStatus = async (issueId) => {
+    const newStatus = statusValues[issueId];
+    if (!newStatus) return;
+    setUpdatingId(issueId);
+    setUpdateError("");
+    const res = await api.updateStatus(issueId, newStatus);
+    if (res?.success) {
+      setStatusValues(s => { const n={...s}; delete n[issueId]; return n; });
+      load();
+    } else {
+      setUpdateError(res?.message || "Update failed");
+    }
+    setUpdatingId(null);
+  };
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
@@ -115,6 +135,7 @@ export default function IssueList({ user, onSelect, onCreate }) {
       </Card>
 
       {error && <div style={{ color:"#fca5a5", background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:10, padding:"12px 16px", marginBottom:16, fontSize:14 }}>⚠ {error}</div>}
+      {updateError && <div style={{ color:"#fca5a5", background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:10, padding:"12px 16px", marginBottom:16, fontSize:14 }}>⚠ {updateError}</div>}
 
       {loading ? (
         <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
@@ -141,7 +162,7 @@ export default function IssueList({ user, onSelect, onCreate }) {
       ) : (
         <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
           {issues.map(issue => (
-            <Card key={issue.id} onClick={() => onSelect(issue.id)} style={{ padding:"16px 20px" }}>
+            <Card key={issue.id} style={{ padding:"16px 20px" }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:16 }}>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6, flexWrap:"wrap" }}>
@@ -153,8 +174,54 @@ export default function IssueList({ user, onSelect, onCreate }) {
                     <Badge status={issue.status} type="status" />
                     <Badge status={issue.priority} type="priority" />
                     <span style={{ fontSize:12, color:T.dim }}>#{issue.id?.slice(0,8)}</span>
-                    {issue.location?.address && <span style={{ fontSize:12, color:T.dim }}>📍 {issue.location.address}</span>}
                   </div>
+                  {issue.location && (
+                    <div style={{ display:"flex", gap:6, flexWrap:"wrap", alignItems:"center", marginTop:8, fontSize:12, color:T.dim }}>
+                      <span>📍</span>
+                      <span>{issue.location.address || "No address"}</span>
+                      {issue.location.lat && (
+                        <span style={{ color:T.muted }}>({issue.location.lat?.toFixed(4)}, {issue.location.lng?.toFixed(4)})</span>
+                      )}
+                      {issue.location.lat && (
+                        <a href={`https://www.google.com/maps?q=${issue.location.lat},${issue.location.lng}`}
+                          target="_blank" rel="noopener noreferrer"
+                          style={{ color:T.cyan, textDecoration:"none", marginLeft:4 }}
+                          onClick={e => e.stopPropagation()}>
+                          🗺
+                        </a>
+                      )}
+                    </div>
+                  )}
+                  {["official","supervisor"].includes(user.role) && (
+                    <div style={{ display:"flex", gap:8, alignItems:"center", marginTop:10, paddingTop:10, borderTop:`1px solid ${T.border}`, flexWrap:"wrap" }}>
+                      <select value={statusValues[issue.id] || ""} onChange={e => setStatusValues(s => ({ ...s, [issue.id]: e.target.value }))}
+                        style={{ ...selBase, marginBottom:0 }}
+                        onFocus={e => (e.target.style.borderColor = T.cyan)}
+                        onBlur={e => (e.target.style.borderColor = T.border)}>
+                        <option value="">Update to…</option>
+                        {STATUSES.filter(s => s !== issue.status).map(s => (
+                          <option key={s} value={s}>{STATUS_META[s].label}</option>
+                        ))}
+                      </select>
+                      <Button variant="primary" disabled={!statusValues[issue.id] || updatingId===issue.id}
+                        onClick={(e) => { e.stopPropagation(); handleQuickStatus(issue.id); }}
+                        style={{ padding:"6px 14px", fontSize:12, minWidth:80 }}>
+                        {updatingId===issue.id ? "..." : "Update"}
+                      </Button>
+                      <Button variant="ghost" onClick={() => onSelect(issue.id)}
+                        style={{ padding:"6px 14px", fontSize:12 }}>
+                        View →
+                      </Button>
+                    </div>
+                  )}
+                  {!["official","supervisor"].includes(user.role) && (
+                    <div style={{ marginTop:8 }}>
+                      <Button variant="ghost" onClick={() => onSelect(issue.id)}
+                        style={{ padding:"6px 14px", fontSize:12 }}>
+                        View Details →
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 <div style={{ textAlign:"right", flexShrink:0 }}>
                   <div style={{ fontSize:12, color:T.dim }}>{timeAgo(issue.updatedAt)}</div>
