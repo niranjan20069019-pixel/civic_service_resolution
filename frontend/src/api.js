@@ -64,7 +64,9 @@ export const api = {
     });
     if (res.success) {
       // Auto-login after register
-      return api.login(email, password);
+      const loginRes = await api.login(email, password);
+      if (!loginRes.success) return loginRes;
+      return loginRes;
     }
     return res;
   },
@@ -130,6 +132,13 @@ export const api = {
 
   // Seed demo data (supervisor only)
   seedData: () => request('/issues/seed', { method: 'POST' }),
+
+  // Notifications
+  getNotifications: () => request('/notifications'),
+  markNotificationRead: (id) => request(`/notifications/${id}/read`, { method: 'PATCH' }),
+
+  // Email existence check (no auth needed)
+  checkEmail: (email) => request('/auth/check-email', { method: 'POST', body: JSON.stringify({ email }) }),
 
   // Analytics (public)
   getAnalytics: async () => {

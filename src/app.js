@@ -19,6 +19,7 @@ const adminRoutes = require('./routes/admin.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const translateRoutes = require('./routes/translate.routes');
 const uploadRoutes = require('./routes/upload.routes');
+const notificationRoutes = require('./routes/notification.routes');
 
 const createApp = () => {
   const app = express();
@@ -92,6 +93,7 @@ const createApp = () => {
   app.use('/api/analytics', analyticsRoutes);
   app.use('/api/translate', translateRoutes);
   app.use('/api/upload', uploadRoutes);
+  app.use('/api/notifications', notificationRoutes);
 
   // Serve uploaded images
   app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

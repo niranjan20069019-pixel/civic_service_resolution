@@ -64,6 +64,29 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/ErrorEnvelope'
  */
+/**
+ * @swagger
+ * /auth/check-email:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Check if an email is already registered
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Returns exists true/false
+ */
+router.post('/check-email', authLimiter, AuthController.checkEmail);
+
 router.post('/register', authLimiter, validate(registerSchema), AuthController.register);
 
 /**

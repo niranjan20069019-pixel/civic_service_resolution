@@ -5,9 +5,9 @@ const STATUSES = ['open', 'in_progress', 'resolved', 'closed', 'rejected'];
 const PRIORITIES = ['low', 'medium', 'high', 'critical'];
 
 const locationSchema = Joi.object({
-  address: Joi.string().trim().max(300).optional(),
-  lat: Joi.number().min(-90).max(90).required(),
-  lng: Joi.number().min(-180).max(180).required(),
+  address: Joi.string().trim().max(300).optional().allow(''),
+  lat: Joi.number().min(-90).max(90).optional(),
+  lng: Joi.number().min(-180).max(180).optional(),
 });
 
 const createIssueSchema = Joi.object({
@@ -15,8 +15,8 @@ const createIssueSchema = Joi.object({
   description: Joi.string().trim().min(10).max(5000).required(),
   category: Joi.string().valid(...CATEGORIES).required(),
   priority: Joi.string().valid(...PRIORITIES).default('medium'),
-  location: locationSchema.optional(),
-  attachments: Joi.array().items(Joi.string().uri()).max(10).default([]),
+  location: locationSchema.optional().allow(null),
+  attachments: Joi.array().items(Joi.string().max(2000)).max(10).default([]),
 });
 
 const listIssuesSchema = Joi.object({

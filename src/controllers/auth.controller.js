@@ -50,6 +50,16 @@ const AuthController = {
       return next(err);
     }
   },
+
+  checkEmail: async (req, res) => {
+    const { email } = req.body;
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return sendSuccess(res, { data: { exists: false, valid: false } });
+    }
+    const { UserStore } = require('../models/store');
+    const user = UserStore.findByEmail(email);
+    return sendSuccess(res, { data: { exists: !!user, valid: true } });
+  },
 };
 
 module.exports = AuthController;

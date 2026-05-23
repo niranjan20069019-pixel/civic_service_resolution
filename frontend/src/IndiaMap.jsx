@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet.heat";
 
 const STATE_LANG_MAP = {
   en: null, hi: null, ta: "Tamil Nadu", te: "Telangana",
@@ -43,9 +44,9 @@ function getColor(density) {
     : "#1e293b";
 }
 
+// ── Choropleth layer (state-level fill) ──────────────────────────────────────
 function ChoroplethLayer({ geoData, stateCounts, maxCount }) {
   const map = useMap();
-
   useEffect(() => {
     if (!geoData) return;
     const layer = L.geoJSON(geoData, {
@@ -53,35 +54,39 @@ function ChoroplethLayer({ geoData, stateCounts, maxCount }) {
         const name = feature.properties?.NAME_1 || feature.properties?.name || "";
         const count = stateCounts[name] || 0;
         const density = maxCount > 0 ? count / maxCount : 0;
-        return {
-          fillColor: getColor(density),
-          weight: 1.2,
-          opacity: 0.8,
-          color: "rgba(255,255,255,0.15)",
-          fillOpacity: 0.6,
-        };
+        return { fillColor: getColor(density), weight: 1.2, opacity: 0.8, color: "rgba(255,255,255,0.15)", fillOpacity: 0.6 };
       },
       onEachFeature: (feature, l) => {
         const name = feature.properties?.NAME_1 || feature.properties?.name || "";
         const count = stateCounts[name] || 0;
-        l.bindTooltip(`<strong>${name}</strong><br/>Issues: ${count}`, {
-          direction: "center", className: "india-tooltip",
-        });
-        l.on("mouseover", () => {
-          l.setStyle({ fillOpacity: 0.85, weight: 2, color: "rgba(255,255,255,0.4)" });
-          l.bringToFront();
-        });
+        l.bindTooltip(`<strong>${name}</strong><br/>Issues: ${count}`, { direction: "center", className: "india-tooltip" });
+        l.on("mouseover", () => { l.setStyle({ fillOpacity: 0.85, weight: 2, color: "rgba(255,255,255,0.4)" }); l.bringToFront(); });
         l.on("mouseout", () => {
-          const count = stateCounts[name] || 0;
-          const density = maxCount > 1 ? count / maxCount : 0;
-          l.setStyle({ fillColor: getColor(density), fillOpacity: 0.6, weight: 1.2, color: "rgba(255,255,255,0.15)" });
+          const d = maxCount > 1 ? (stateCounts[name] || 0) / maxCount : 0;
+          l.setStyle({ fillColor: getColor(d), fillOpacity: 0.6, weight: 1.2, color: "rgba(255,255,255,0.15)" });
         });
       },
     });
     layer.addTo(map);
     return () => { map.removeLayer(layer); };
   }, [geoData, stateCounts, maxCount, map]);
+  return null;
+}
 
+// ── Heatmap layer (leaflet.heat) ─────────────────────────────────────────────
+function HeatLayer({ points }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!points.length) return;
+    const heat = L.heatLayer(points, {
+      radius: 35,
+      blur: 25,
+      maxZoom: 10,
+      gradient: { 0.2: "#06b6d4", 0.5: "#f59e0b", 0.8: "#ef4444", 1.0: "#ffffff" },
+    });
+    heat.addTo(map);
+    return () => { map.removeLayer(heat); };
+  }, [points, map]);
   return null;
 }
 
@@ -98,8 +103,29 @@ function AutoFocus({ lang }) {
   return null;
 }
 
+// ── Legend ───────────────────────────────────────────────────────────────────
+function HeatLegend() {
+  return (
+    <div style={{
+      position: "absolute", bottom: 28, left: 12, zIndex: 1000,
+      background: "rgba(13,27,46,0.9)", backdropFilter: "blur(12px)",
+      borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)",
+      padding: "10px 14px", fontSize: 11, color: "#94a3b8",
+    }}>
+      <div style={{ fontWeight: 600, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Intensity</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <div style={{ width: 80, height: 8, borderRadius: 4, background: "linear-gradient(to right, #06b6d4, #f59e0b, #ef4444, #fff)" }} />
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 3 }}>
+        <span>Low</span><span>High</span>
+      </div>
+    </div>
+  );
+}
+
 export default function IndiaMap({ issues = [], lang = "en" }) {
   const [geoData, setGeoData] = useState(null);
+  const [mode, setMode] = useState("heatmap"); // "heatmap" | "choropleth"
 
   useEffect(() => {
     fetch("https://raw.githubusercontent.com/niranjan-500/india-states-geojson/refs/heads/master/india_states.geojson")
@@ -121,16 +147,41 @@ export default function IndiaMap({ issues = [], lang = "en" }) {
         if (state) counts[state] = (counts[state] || 0) + 1;
       }
     });
-    const max = Math.max(...Object.values(counts), 1);
-    return { stateCounts: counts, maxCount: max };
+    return { stateCounts: counts, maxCount: Math.max(...Object.values(counts), 1) };
   }, [issues]);
 
-  const sortedStates = useMemo(() => {
-    return Object.entries(stateCounts).sort((a, b) => b[1] - a[1]);
-  }, [stateCounts]);
+  // [lat, lng, intensity] for leaflet.heat
+  const heatPoints = useMemo(() => {
+    return (issues || [])
+      .filter(i => i.location?.lat && i.location?.lng)
+      .map(i => [i.location.lat, i.location.lng, 1]);
+  }, [issues]);
+
+  const sortedStates = useMemo(() =>
+    Object.entries(stateCounts).sort((a, b) => b[1] - a[1]),
+  [stateCounts]);
+
+  const btnStyle = (active) => ({
+    padding: "5px 12px", borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer",
+    background: active ? "rgba(6,182,212,0.2)" : "rgba(255,255,255,0.04)",
+    border: `1px solid ${active ? "rgba(6,182,212,0.5)" : "rgba(255,255,255,0.08)"}`,
+    color: active ? "#06b6d4" : "#94a3b8",
+    transition: "all 0.15s",
+  });
 
   return (
     <div style={{ borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", height: 460, position: "relative" }}>
+      {/* Mode toggle */}
+      <div style={{
+        position: "absolute", top: 12, left: 12, zIndex: 1000,
+        display: "flex", gap: 6, background: "rgba(13,27,46,0.9)",
+        backdropFilter: "blur(12px)", borderRadius: 8, padding: 4,
+        border: "1px solid rgba(255,255,255,0.08)",
+      }}>
+        <button style={btnStyle(mode === "heatmap")} onClick={() => setMode("heatmap")}>🔥 Heatmap</button>
+        <button style={btnStyle(mode === "choropleth")} onClick={() => setMode("choropleth")}>🗺 Choropleth</button>
+      </div>
+
       <MapContainer
         center={[21.5, 80.0]}
         zoom={5}
@@ -143,11 +194,18 @@ export default function IndiaMap({ issues = [], lang = "en" }) {
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
         />
         <AutoFocus lang={lang} />
-        {geoData && (
+
+        {mode === "choropleth" && geoData && (
           <ChoroplethLayer geoData={geoData} stateCounts={stateCounts} maxCount={maxCount} />
+        )}
+        {mode === "heatmap" && heatPoints.length > 0 && (
+          <HeatLayer points={heatPoints} />
         )}
       </MapContainer>
 
+      {mode === "heatmap" && <HeatLegend />}
+
+      {/* Hotspots sidebar */}
       {sortedStates.length > 0 && (
         <div style={{
           position: "absolute", top: 12, right: 12, zIndex: 1000,
@@ -176,14 +234,24 @@ export default function IndiaMap({ issues = [], lang = "en" }) {
         </div>
       )}
 
-      {!geoData && (
+      {mode === "heatmap" && heatPoints.length === 0 && (
+        <div style={{
+          position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)", zIndex: 1000,
+          background: "rgba(13,27,46,0.85)", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)",
+          padding: "6px 14px", fontSize: 11, color: "#94a3b8",
+        }}>
+          No geo-tagged issues yet — submit issues with a location to see the heatmap
+        </div>
+      )}
+
+      {!geoData && mode === "choropleth" && (
         <div style={{
           position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)", zIndex: 1000,
           background: "rgba(239,68,68,0.1)", backdropFilter: "blur(8px)",
           borderRadius: 8, border: "1px solid rgba(239,68,68,0.2)",
           padding: "6px 14px", fontSize: 11, color: "#fca5a5",
         }}>
-          Map boundaries loading… {sortedStates.length > 0 ? "Showing issue hotspots" : ""}
+          Map boundaries loading…
         </div>
       )}
     </div>
