@@ -19,7 +19,7 @@ router.use(authenticate);
 
 // ─── Seed demo data (supervisor only) ────────────────────────────────────────
 router.post('/seed', authorize('supervisor'), async (req, res) => {
-  const { IssueStore, HistoryStore, UserStore } = require('../models/store');
+  const { IssueStore, HistoryStore } = require('../models/store');
   const SEED = [
     { title: 'Large pothole on MG Road', description: 'Deep pothole near bus stop causing vehicle damage', category: 'roads', priority: 'high', status: 'open', location: { address: 'MG Road, Bengaluru', lat: 12.9716, lng: 77.5946 } },
     { title: 'Broken streetlight near park', description: 'Streetlight has been out for 2 weeks creating safety hazard', category: 'electricity', priority: 'medium', status: 'in_progress', location: { address: 'Cubbon Park, Bengaluru', lat: 12.9763, lng: 77.5929 } },

@@ -41,7 +41,8 @@ const UserStore = {
   },
 
   toPublic: (user) => {
-    const { passwordHash, ...pub } = user;
+    const pub = { ...user };
+    delete pub.passwordHash;
     return pub;
   },
 
@@ -56,7 +57,7 @@ const TokenStore = {
     revokedTokens.add(token);
     refreshTokens.delete(token);
   },
-  revokeAllForUser: (userId) => {
+  revokeAllForUser: (_userId) => {
     // In a real DB, delete WHERE userId = userId
     // Here we just mark all as revoked (tokens carry userId in their payload)
   },

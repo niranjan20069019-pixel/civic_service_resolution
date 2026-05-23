@@ -726,7 +726,7 @@ const IssueDetail = ({ issueId, user, onBack, onUpdated }) => {
                     </div>
                     <div style={{ flex:1 }}>
                       <div style={{ fontSize:13, color:T.text, fontWeight:500 }}>
-                        {h.action==="created" ? t("issue_created") : `${t("status_to")} ${STATUS_META[h.to]?.label||h.to}`}
+                        {h.action==="created" ? t("issue_created") : `${t("status_to")} ${STATUS_META[h.newValue]?.label||h.newValue}`}
                       </div>
                       {h.note && <div style={{ fontSize:12, color:T.muted, marginTop:2 }}>{h.note}</div>}
                       <div style={{ fontSize:11, color:T.dim, marginTop:2 }}>{fmt(h.timestamp)}</div>

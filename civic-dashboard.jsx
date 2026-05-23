@@ -529,7 +529,7 @@ const IssueDetail = ({ issueId, user, onBack, onUpdated }) => {
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 13, color: "#374151", fontWeight: 500 }}>
-                        {h.action === "created" ? "Issue created" : `Status → ${STATUS_META[h.to]?.label || h.to}`}
+                        {h.action === "created" ? "Issue created" : `Status → ${STATUS_META[h.to]?.label || h.to || h.newValue}`}
                       </div>
                       {h.note && <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>{h.note}</div>}
                       <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 2 }}>{formatDate(h.timestamp)}</div>

@@ -2,7 +2,7 @@ const { IssueStore, HistoryStore, UserStore } = require('../models/store');
 const SLAService = require('./sla.service');
 const { getIO } = require('../io');
 
-const emit = (event, data) => { try { const io = getIO(); if (io) io.emit(event, data); } catch (_) {} };
+const emit = (event, data) => { try { const io = getIO(); if (io) io.emit(event, data); } catch (_) { /* ignore */ } };
 
 const IssueService = {
   /**

@@ -1,5 +1,4 @@
 const Joi = require('joi');
-const { IssueStore } = require('../../models/store');
 
 const passwordRules = Joi.string()
   .min(8)

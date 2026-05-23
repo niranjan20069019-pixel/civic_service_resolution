@@ -1,5 +1,5 @@
 const AuthService = require('../services/auth.service');
-const { sendSuccess, sendError } = require('../utils/response');
+const { sendSuccess } = require('../utils/response');
 const logger = require('../utils/logger');
 
 const AuthController = {

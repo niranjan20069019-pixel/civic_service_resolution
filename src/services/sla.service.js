@@ -5,7 +5,7 @@
  * logic called by the background cron job.
  */
 
-const { IssueStore, HistoryStore, UserStore } = require('../models/store');
+const { IssueStore, HistoryStore } = require('../models/store');
 const { SLAStore } = require('../models/sla.store');
 const { EventEmitter } = require('events');
 const logger = require('../utils/logger');
