@@ -3,9 +3,18 @@ services:
     name: civic-service-web
     env: node
     plan: free
+    region: oregon
     branch: main
     buildCommand: npm install && npm run build
     startCommand: npm start
+    healthCheckPath: /health
+    nodeVersion: 18.18.0
     envVars:
       - key: NODE_ENV
         value: production
+      - key: CORS_ORIGINS
+        value: https://civic-service-web.onrender.com
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
