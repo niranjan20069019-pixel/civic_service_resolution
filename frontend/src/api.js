@@ -85,7 +85,29 @@ export const api = {
   },
 
   getStoredUser: () => {
-    try { return JSON.parse(store.get('user')); } catch { return null; }
+    try {
+      const raw = store.get('user');
+      if (!raw || !store.get('accessToken')) {
+        store.del('user'); store.del('accessToken'); store.del('refreshToken');
+        return null;
+      }
+      const user = JSON.parse(raw);
+      // If token is expired, clear all and force re-login
+      try {
+        const payload = JSON.parse(atob(store.get('accessToken').split('.')[1]));
+        if (payload.exp * 1000 < Date.now()) {
+          store.del('user'); store.del('accessToken'); store.del('refreshToken');
+          return null;
+        }
+      } catch {
+        store.del('user'); store.del('accessToken'); store.del('refreshToken');
+        return null;
+      }
+      return user;
+    } catch {
+      store.del('user'); store.del('accessToken'); store.del('refreshToken');
+      return null;
+    }
   },
 
   // Issues
