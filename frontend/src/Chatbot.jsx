@@ -85,6 +85,7 @@ export default function Chatbot({ role, onNavigate, onChangeLang, userName }) {
   const [listening, setListening] = useState(false);
   const [imageUrl, setImageUrl] = useState(null);
   const [imageUploading, setImageUploading] = useState(false);
+  const imageUploadingRef = useRef(false);
   const [voiceSupported, setVoiceSupported] = useState(true);
   const bottomRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -159,15 +160,16 @@ export default function Chatbot({ role, onNavigate, onChangeLang, userName }) {
 
     // Upload in background
     setImageUploading(true);
+    imageUploadingRef.current = true;
     api.uploadImage(file).then(res => {
       setImageUploading(false);
+      imageUploadingRef.current = false;
       if (res?.success) {
         const url = res.data.url;
         setImageUrl(url);
         setReport(r => ({ ...r, attachments: [url] }));
       }
-      // If upload fails, we still have the local preview; submission will use empty attachments
-    }).catch(() => setImageUploading(false));
+    }).catch(() => { setImageUploading(false); imageUploadingRef.current = false; });
   };
 
   // ─── Step handler ────────────────────────────────────────────────────────────
@@ -263,13 +265,13 @@ export default function Chatbot({ role, onNavigate, onChangeLang, userName }) {
   const doSubmit = async () => {
     setSubmitting(true);
     // Wait for background upload to finish if still in progress
-    if (imageUploading) {
+    if (imageUploadingRef.current) {
       addMsg("bot", "⏳ Waiting for photo upload to finish…");
       await new Promise(resolve => {
         const check = setInterval(() => {
-          if (!imageUploading) { clearInterval(check); resolve(); }
+          if (!imageUploadingRef.current) { clearInterval(check); resolve(); }
         }, 300);
-        setTimeout(() => { clearInterval(check); resolve(); }, 8000); // max 8s wait
+        setTimeout(() => { clearInterval(check); resolve(); }, 8000);
       });
     }
 

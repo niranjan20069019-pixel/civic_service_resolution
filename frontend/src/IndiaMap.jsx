@@ -125,17 +125,20 @@ function HeatLegend() {
 
 export default function IndiaMap({ issues = [], lang = "en" }) {
   const [geoData, setGeoData] = useState(null);
-  const [mode, setMode] = useState("heatmap"); // "heatmap" | "choropleth"
+  const [geoError, setGeoError] = useState(false);
+  const [mode, setMode] = useState("choropleth"); // choropleth is default — always colourful
 
   useEffect(() => {
-    fetch("https://raw.githubusercontent.com/niranjan-500/india-states-geojson/refs/heads/master/india_states.geojson")
-      .then(r => r.json())
+    // Primary: Subhash9325 — confirmed working, uses NAME_1
+    fetch("https://raw.githubusercontent.com/Subhash9325/GeoJson-Data-of-Indian-States/master/Indian_States")
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(setGeoData)
       .catch(() => {
-        fetch("https://raw.githubusercontent.com/geohacker/india/master/state/india_telangana.geojson")
-          .then(r => r.json())
+        // Fallback: datameet
+        fetch("https://raw.githubusercontent.com/datameet/maps/master/States/india-composite.geojson")
+          .then(r => { if (!r.ok) throw new Error(); return r.json(); })
           .then(setGeoData)
-          .catch(() => setGeoData(null));
+          .catch(() => setGeoError(true));
       });
   }, []);
 
@@ -147,7 +150,16 @@ export default function IndiaMap({ issues = [], lang = "en" }) {
         if (state) counts[state] = (counts[state] || 0) + 1;
       }
     });
-    return { stateCounts: counts, maxCount: Math.max(...Object.values(counts), 1) };
+
+    // If no geo-tagged issues yet, use demo seed counts so the map is never blank
+    const hasRealData = Object.keys(counts).length > 0;
+    const effective = hasRealData ? counts : {
+      "Maharashtra": 12, "Uttar Pradesh": 10, "Delhi": 9, "Karnataka": 8,
+      "Tamil Nadu": 7, "West Bengal": 6, "Gujarat": 5, "Rajasthan": 4,
+      "Telangana": 4, "Bihar": 3, "Madhya Pradesh": 3, "Kerala": 2,
+      "Punjab": 2, "Haryana": 2, "Odisha": 1, "Assam": 1,
+    };
+    return { stateCounts: effective, maxCount: Math.max(...Object.values(effective), 1), isDemo: !hasRealData };
   }, [issues]);
 
   // [lat, lng, intensity] for leaflet.heat
@@ -244,14 +256,23 @@ export default function IndiaMap({ issues = [], lang = "en" }) {
         </div>
       )}
 
-      {!geoData && mode === "choropleth" && (
+      {!geoData && !geoError && mode === "choropleth" && (
         <div style={{
           position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)", zIndex: 1000,
-          background: "rgba(239,68,68,0.1)", backdropFilter: "blur(8px)",
-          borderRadius: 8, border: "1px solid rgba(239,68,68,0.2)",
+          background: "rgba(13,27,46,0.85)", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)",
+          padding: "6px 14px", fontSize: 11, color: "#94a3b8",
+        }}>
+          ⏳ Loading state boundaries…
+        </div>
+      )}
+
+      {geoError && (
+        <div style={{
+          position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)", zIndex: 1000,
+          background: "rgba(239,68,68,0.1)", borderRadius: 8, border: "1px solid rgba(239,68,68,0.2)",
           padding: "6px 14px", fontSize: 11, color: "#fca5a5",
         }}>
-          Map boundaries loading…
+          ⚠ Could not load state boundaries — check your connection
         </div>
       )}
     </div>

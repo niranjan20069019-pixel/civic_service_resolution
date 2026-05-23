@@ -26,7 +26,13 @@ export default function IssueDetail({ issueId, user, onBack, onUpdated }) {
   const load = useCallback(async () => {
     setLoading(true);
     const res = await api.getIssue(issueId);
-    if (res?.success) { setData(res.data); setStatusForm(f => ({ ...f, status:res.data.issue?.status||"" })); }
+    if (res?.success) {
+      // server returns { issue, timeline, sla } — normalise to { issue, history }
+      const issue = res.data.issue ?? res.data;
+      const history = res.data.timeline ?? res.data.history ?? [];
+      setData({ issue, history });
+      setStatusForm(f => ({ ...f, status: issue?.status || "" }));
+    }
     setLoading(false);
   }, [issueId]);
 
