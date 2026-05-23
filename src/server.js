@@ -7,14 +7,8 @@ const { startAll, stopAll } = require('./jobs/cron');
 const { setIO } = require('./io');
 
 // ─── Startup checks ───────────────────────────────────────────────────────────
-if (config.env === 'production') {
-  const missing = [];
-  if (!config.jwt.accessSecret) missing.push('JWT_ACCESS_SECRET');
-  if (!config.jwt.refreshSecret) missing.push('JWT_REFRESH_SECRET');
-  if (missing.length > 0) {
-    logger.error(`Missing required env vars: ${missing.join(', ')}`);
-    process.exit(1);
-  }
+if (!config.jwt.accessSecret || !config.jwt.refreshSecret) {
+  logger.warn('JWT_ACCESS_SECRET / JWT_REFRESH_SECRET not set — using dev fallbacks. Set these in Render Dashboard → Environment.');
 }
 
 const app = createApp();
