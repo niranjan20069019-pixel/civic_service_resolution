@@ -6,19 +6,24 @@ const logger = require('./utils/logger');
 const { startAll, stopAll } = require('./jobs/cron');
 const { setIO } = require('./io');
 
-// ─── Startup checks ───────────────────────────────────────────────────────────
-if (!config.jwt.accessSecret || !config.jwt.refreshSecret) {
+if (!process.env.JWT_ACCESS_SECRET || !process.env.JWT_REFRESH_SECRET) {
   logger.warn('JWT_ACCESS_SECRET / JWT_REFRESH_SECRET not set — using dev fallbacks. Set these in Render Dashboard → Environment.');
 }
 
 const app = createApp();
-const server = http.createServer(app);
+// Reuse the same origin set that CORS middleware uses
+const { allowedOrigins } = require('./app');
 
-const allowedOrigins = config.cors.origins.includes('*')
-  ? true
-  : config.cors.origins;
+const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: allowedOrigins, methods: ['GET', 'POST'], credentials: true },
+  cors: {
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.has(origin)) return cb(null, true);
+      cb(new Error(`Socket.IO CORS: ${origin} not allowed`));
+    },
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
 });
 setIO(io);
 
