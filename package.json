@@ -5,6 +5,9 @@
   "workspaces": [
     "frontend"
   ],
+  "engines": {
+    "node": ">=18.0.0 <23.0.0"
+  },
   "description": "Production-ready REST API for a Civic Issue Reporting Platform with SLA engine and analytics",
   "main": "src/server.js",
   "scripts": {
