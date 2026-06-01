@@ -6,6 +6,7 @@ export const STATUS_META = {
   open:        { label: "Open",        color: "#06b6d4", bg: "rgba(6,182,212,0.12)",   text: "#67e8f9" },
   in_progress: { label: "In Progress", color: "#f59e0b", bg: "rgba(245,158,11,0.12)",  text: "#fcd34d" },
   resolved:    { label: "Resolved",    color: "#10b981", bg: "rgba(16,185,129,0.12)",  text: "#6ee7b7" },
+  unresolved:  { label: "Unresolved",  color: "#f97316", bg: "rgba(249,115,22,0.12)",  text: "#fdba74" },
   closed:      { label: "Closed",      color: "#64748b", bg: "rgba(100,116,139,0.12)", text: "#94a3b8" },
   rejected:    { label: "Rejected",    color: "#ef4444", bg: "rgba(239,68,68,0.12)",   text: "#fca5a5" },
 };

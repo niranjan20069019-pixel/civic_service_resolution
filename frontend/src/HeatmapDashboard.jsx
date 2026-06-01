@@ -31,6 +31,7 @@ export default function HeatmapDashboard() {
   const openCount = issues.filter(i => i.status === "open").length;
   const inProgCount = issues.filter(i => i.status === "in_progress").length;
   const resolvedCount = issues.filter(i => ["resolved", "closed"].includes(i.status)).length;
+  const unresolvedCount = issues.filter(i => ["open","in_progress","rejected"].includes(i.status)).length;
   const totalCount = issues.length;
 
   return (
@@ -44,11 +45,12 @@ export default function HeatmapDashboard() {
         </p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap: 10, marginBottom: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5,1fr)", gap: 10, marginBottom: 20 }}>
         {[
           { label: "Total Issues", value: totalCount, icon: "📋", color: T.text },
           { label: "Open", value: openCount, icon: "📝", color: "#f59e0b" },
           { label: "In Progress", value: inProgCount, icon: "🔄", color: "#06b6d4" },
+          { label: "Unresolved", value: unresolvedCount, icon: "🟠", color: "#f97316" },
           { label: "Resolved", value: resolvedCount, icon: "✅", color: "#10b981" },
         ].map(s => (
           <div key={s.label} style={{ background: T.surface, borderRadius: 12, border: `1px solid ${T.border}`, padding: "14px 16px" }}>

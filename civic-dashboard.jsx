@@ -120,6 +120,7 @@ const STATUS_META = {
   open: { label: "Open", color: "#2563eb", bg: "#eff6ff", text: "#1e40af" },
   in_progress: { label: "In Progress", color: "#d97706", bg: "#fffbeb", text: "#92400e" },
   resolved: { label: "Resolved", color: "#16a34a", bg: "#f0fdf4", text: "#14532d" },
+  unresolved: { label: "Unresolved", color: "#f97316", bg: "#fff7ed", text: "#9a3412" },
   closed: { label: "Closed", color: "#6b7280", bg: "#f9fafb", text: "#374151" },
   rejected: { label: "Rejected", color: "#dc2626", bg: "#fef2f2", text: "#991b1b" },
 };
@@ -665,11 +666,12 @@ const Analytics = () => {
       <p style={{ color: "#6b7280", fontSize: 13, marginBottom: 24 }}>Public transparency dashboard — all figures are live from the in-memory store.</p>
 
       {/* Metric cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16, marginBottom: 24 }}>
         <MetricCard label="Total Issues" value={data.total_issues} icon="📋" color="#0f172a" sub="all time" />
-        <MetricCard label="Resolved" value={data.resolved_count} icon="✅" color="#16a34a" sub={`${data.resolved_pct}% resolution rate`} />
         <MetricCard label="Open" value={data.by_status.find(s => s.status === "open")?.total || 0} icon="🔵" color="#2563eb" sub="awaiting action" />
         <MetricCard label="In Progress" value={data.by_status.find(s => s.status === "in_progress")?.total || 0} icon="🟡" color="#d97706" sub="being worked on" />
+        <MetricCard label="Unresolved" value={data.by_status.filter(s => ["open","in_progress","rejected"].includes(s.status)).reduce((s, x) => s + x.total, 0)} icon="🟠" color="#f97316" sub="open / in-progress / rejected" />
+        <MetricCard label="Resolved" value={data.resolved_count} icon="✅" color="#16a34a" sub={`${data.resolved_pct}% resolution rate`} />
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>

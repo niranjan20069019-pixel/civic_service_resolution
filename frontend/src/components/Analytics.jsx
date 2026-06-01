@@ -42,8 +42,8 @@ export default function Analytics({ user }) {
 
   if (loading) return (
     <div>
-      <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap: isMobile ? 10 : 16, marginBottom:24 }}>
-        {[1,2,3,4].map(i => <div key={i} style={{ height: isMobile ? 80 : 100, borderRadius:16, background:"rgba(255,255,255,0.04)", animation:"pulse 1.5s ease-in-out infinite" }} />)}
+      <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5,1fr)", gap: isMobile ? 10 : 16, marginBottom:24 }}>
+        {[1,2,3,4,5].map(i => <div key={i} style={{ height: isMobile ? 80 : 100, borderRadius:16, background:"rgba(255,255,255,0.04)", animation:"pulse 1.5s ease-in-out infinite" }} />)}
       </div>
       <div style={{ height:200, borderRadius:16, background:"rgba(255,255,255,0.04)", animation:"pulse 1.5s ease-in-out infinite" }} />
     </div>
@@ -55,6 +55,7 @@ export default function Analytics({ user }) {
   const byCategory = data.by_category || [];
   const totalIssues = data.total_issues ?? byStatus.reduce((s, x) => s + x.total, 0);
   const resolvedCount = data.resolved_count ?? byStatus.find(s => s.status === "resolved")?.total ?? 0;
+  const unresolvedCount = byStatus.filter(s => ["open","in_progress","rejected"].includes(s.status)).reduce((s, x) => s + x.total, 0);
   const slaCompliance = totalIssues > 0 ? Math.round((resolvedCount / totalIssues) * 100) : 0;
   const avgResolutionH = byCategory.length > 0
     ? Math.round(byCategory.filter(c => c.avg_resolution_hours).reduce((s, c) => s + (c.avg_resolution_hours || 0), 0) / Math.max(byCategory.filter(c => c.avg_resolution_hours).length, 1))
@@ -90,10 +91,11 @@ export default function Analytics({ user }) {
         </div>
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap: isMobile ? 10 : 16, marginBottom:24 }}>
+      <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5,1fr)", gap: isMobile ? 10 : 16, marginBottom:24 }}>
         <MetricCard label="Total Issues" value={totalIssues} icon="📋" color={T.text} sub="all time" />
-        <MetricCard label="SLA Compliance" value={`${slaCompliance}%`} icon="🎯" color={slaCompliance >= 70 ? "#10b981" : slaCompliance >= 40 ? "#f59e0b" : "#ef4444"} sub="resolved / total" />
         <MetricCard label="Open" value={byStatus.find(s=>s.status==="open")?.total??0} icon="🔵" color={T.cyan} sub="awaiting action" />
+        <MetricCard label="Unresolved" value={unresolvedCount} icon="🟠" color="#f97316" sub="open / in-progress / rejected" />
+        <MetricCard label="Resolved / SLA" value={`${slaCompliance}%`} icon="🎯" color={slaCompliance >= 70 ? "#10b981" : slaCompliance >= 40 ? "#f59e0b" : "#ef4444"} sub={`${resolvedCount} resolved`} />
         <MetricCard label="Avg Resolution" value={avgResolutionH ? `${avgResolutionH}h` : "—"} icon="⏱" color="#a855f7" sub="across categories" />
       </div>
 

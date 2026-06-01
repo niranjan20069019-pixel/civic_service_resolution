@@ -77,6 +77,7 @@ export default function IssueList({ user, onSelect, onCreate }) {
   const openCount = issues.filter(i => i.status === "open").length;
   const inProgressCount = issues.filter(i => i.status === "in_progress").length;
   const resolvedCount = issues.filter(i => i.status === "resolved").length;
+  const unresolvedCount = issues.filter(i => ["open","in_progress","rejected"].includes(i.status)).length;
 
   return (
     <div>
@@ -108,10 +109,11 @@ export default function IssueList({ user, onSelect, onCreate }) {
         </div>
       )}
 
-      <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap:12, marginBottom:24 }}>
+      <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5,1fr)", gap:12, marginBottom:24 }}>
         <MetricCard label={t("total_issues")} value={pagination.total} icon="📋" color={T.text} />
         <MetricCard label={t("open")} value={openCount} icon="🔵" color={T.cyan} />
         <MetricCard label={t("in_progress")} value={inProgressCount} icon="🟡" color="#f59e0b" />
+        <MetricCard label={t("unresolved")} value={unresolvedCount} icon="🟠" color="#f97316" />
         <MetricCard label={t("resolved")} value={resolvedCount} icon="✅" color="#10b981" />
       </div>
 
